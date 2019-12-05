@@ -1,0 +1,50 @@
+{
+  "name": "gtcr-notifications",
+  "version": "0.1.0",
+  "description": "Microservice for monitoring gtcr contract events.",
+  "main": "index.js",
+  "author": "Kleros",
+  "license": "MIT",
+  "private": true,
+  "repository": "https://github.com/kleros/gtcr-notifications",
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "dapp",
+    "kleros",
+    "gtcr"
+  ],
+  "scripts": {
+    "start": "node -r dotenv/config index.js",
+    "prettify": "kathari prettify",
+    "lint": "kathari lint:js --no-root",
+    "cz": "kathari cz"
+  },
+  "dependencies": {
+    "@kleros/tcr": "^0.1.26",
+    "dotenv": "^8.2.0",
+    "ethers": "^4.0.40"
+  },
+  "devDependencies": {
+    "@kleros/kathari": "^0.25.0",
+    "husky": "^3.1.0",
+    "standard-version": "^7.0.1"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "kathari precommit",
+      "commit-msg": "kathari commitmsg"
+    }
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}
