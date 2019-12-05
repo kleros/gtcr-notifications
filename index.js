@@ -1,3 +1,4 @@
+/* eslint-disable valid-jsdoc */
 const http = require('http')
 const app = require('./app')
 
@@ -5,22 +6,18 @@ const app = require('./app')
  * Event listener for HTTP server "error" event.
  */
 const onError = error => {
-  if (error.syscall !== 'listen') {
-    throw error
-  }
+  if (error.syscall !== 'listen') throw error
 
-  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
+  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges')
-      process.exit(1)
-      break
+      console.error(`${bind} requires elevated privileges`)
+      throw new Error(`${bind} requires elevated privileges`)
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use')
-      process.exit(1)
-      break
+      console.error(`${bind} is already in use`)
+      throw new Error(`${bind} is already in use`)
     default:
       throw error
   }
@@ -31,8 +28,8 @@ const onError = error => {
  */
 const onListening = () => {
   const addr = server.address()
-  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-  console.info('Listening on port', addr.port)
+  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`
+  console.info('Listening on', bind)
 }
 
 const port = process.env.PORT || '3000'

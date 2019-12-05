@@ -1,12 +1,10 @@
 module.exports = {
   // Plugins
-  plugins: ['unicorn', 'react-hooks'],
+  plugins: ['unicorn'],
 
   // Extends
   extends: [
-    'react-app', // create-react-app config
     'standard', // JS Standard
-    'standard-jsx', // JS Standard JSX
     'plugin:unicorn/recommended', // unicorn
     'plugin:prettier/recommended' // prettier overrides
   ],
@@ -52,31 +50,8 @@ module.exports = {
     'import/no-named-default': 2,
     'import/no-useless-path-segments': 2,
 
-    // React JSX
-    'react/jsx-filename-extension': [
-      2,
-      {
-        extensions: ['.js']
-      }
-    ],
-    'react/jsx-indent': 0,
-    'react/jsx-curly-brace-presence': [2, 'never'],
-
-    // React
-    'react/prefer-stateless-function': 2,
-    'react/destructuring-assignment': [2, 'always'],
-    'react/prop-types': 2,
-    'react/forbid-prop-types': 2,
-    'react/no-unused-prop-types': 2,
-    'react/require-default-props': 2,
-    'react/default-props-match-prop-types': 2,
-    // hooks
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
-
     // JS Standard
     'standard/computed-property-even-spacing': 0,
-    'jsx-a11y/href-no-hash': 0, // Buggy
 
     // JSDoc
     'require-jsdoc': [
