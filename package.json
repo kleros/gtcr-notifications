@@ -16,19 +16,49 @@
   ],
   "scripts": {
     "start": "node -r dotenv/config index.js",
-    "prettify": "kathari prettify",
-    "lint": "kathari lint:js --no-root",
-    "cz": "kathari cz"
+    "dev": "nodemon -r dotenv/config index.js",
+    "lint": "eslint './src/**/*.js'"
   },
   "dependencies": {
     "@kleros/tcr": "^0.1.26",
+    "ajv": "^6.10.2",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
-    "ethers": "^4.0.40"
+    "ethers": "^4.0.40",
+    "express": "^4.17.1",
+    "json-schema": "^0.2.5",
+    "morgan": "^1.9.1"
   },
   "devDependencies": {
-    "@kleros/kathari": "^0.25.0",
+    "@commitlint/cli": "^8.2.0",
+    "@commitlint/config-conventional": "^8.2.0",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-config-react-app": "^4.0.1",
+    "eslint-config-standard": "^13.0.1",
+    "eslint-config-standard-jsx": "^7.0.0",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.14.2",
+    "eslint-plugin-react-hooks": "^1.6.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-unicorn": "^9.1.1",
     "husky": "^3.1.0",
+    "nodemon": "^2.0.1",
+    "prettier": "^1.19.1",
     "standard-version": "^7.0.1"
+  },
+  "standard": {
+    "parser": "babel-eslint",
+    "ignore": [
+      "/node_modules/**"
+    ],
+    "globals": [
+      "require"
+    ]
   },
   "commitlint": {
     "extends": [
@@ -37,14 +67,13 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "kathari precommit",
-      "commit-msg": "kathari commitmsg"
+      "pre-commit": "yarn lint",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  "babelMacros": {
+    "styledComponents": {
+      "pure": true
+    }
+  }
 }
