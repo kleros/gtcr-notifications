@@ -15,7 +15,7 @@ Service and database for handling Generalized TCR contract events.
 
 ## Prerequisites
 
-- Node version 10^
+- NodeJS version 10
 
 ## Get Started
 

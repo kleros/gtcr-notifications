@@ -4,80 +4,101 @@ const validateSchema = require('../schemas/validation')
 const router = express.Router()
 
 const {
-  REMOVAL_ACCEPTED,
-  SUBMISSION_CHALLENGED,
-  APPEALED
-} = require('../notification/types')
+  NOTIFICATION_TYPES: { REMOVAL_ACCEPTED, SUBMISSION_CHALLENGED, APPEALED }
+} = require('../utils/types')
 
-router.post('/subscribe', validateSchema('subscription'), async (req, res) => {
-  try {
-    const { userAddr, arbitratorAddr, gtcrAddr, itemID, requestID } = req.body
-    res.send({
-      message: `Now saving events related to request ${requestID} of item
-        ${itemID} of the GTCR at ${gtcrAddr} for user ${userAddr}. Events
-        from arbitrator at ${arbitratorAddr} related to this request will
-        also be saved.`,
-      status: 'success'
-    })
-  } catch (err) {
-    res.send({
-      message: 'Internal error, please contact administrators',
-      error: err.message,
-      status: 'failed'
-    })
-  }
-})
+const buildRouter = db => {
+  router.post(
+    '/subscribe',
+    validateSchema('subscription'),
+    async (req, res) => {
+      try {
+        const { subscriberAddr, arbitratorAddr, gtcrAddr, itemID } = req.body
 
-router.get('/notifications/:userAddr', async (req, res) => {
-  try {
-    const { userAddr } = req.params
+        // Check if user has notifications object initialized
+        // and if not, initialize it.
+        try {
+          await db.get(subscriberAddr)
+        } catch (err) {
+          if (err.type === 'NotFoundError')
+            await db.put(
+              JSON.stringify({
+                unread: false,
+                notifications: []
+              })
+            )
 
-    // Mocking notifications for now.
-    const notifications = {
-      userAddr,
-      viewed: false,
-      notifications: [
-        {
-          type: SUBMISSION_CHALLENGED,
-          itemID:
-            '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-          gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          clicked: false
-        },
-        {
-          type: REMOVAL_ACCEPTED,
-          itemID:
-            '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-          gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          challenger: null,
-          clicked: false
-        },
-        {
-          type: APPEALED,
-          itemID:
-            '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-          gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-          clicked: false
+          throw new Error(err)
         }
-      ]
-    }
-    console.info(notifications)
-    res.send(notifications)
-  } catch (err) {
-    res.send({
-      message: 'Internal error, please contact administrators',
-      error: err.message,
-      status: 'failed'
-    })
-  }
-})
 
-module.exports = router
+        res.send({
+          message: `Now saving events related to item
+          ${itemID} of the GTCR at ${gtcrAddr} for user ${subscriberAddr}. Events
+          from arbitrator at ${arbitratorAddr} related to this request will
+          also be saved.`,
+          status: 'success'
+        })
+      } catch (err) {
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
+      }
+    }
+  )
+
+  router.get('/notifications/:subscriberAddr', async (req, res) => {
+    try {
+      const { subscriberAddr } = req.params
+
+      // Mocking notifications for now.
+      const notifications = {
+        unread: false,
+        notifications: [
+          {
+            type: SUBMISSION_CHALLENGED,
+            itemID:
+              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
+            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            clicked: false
+          },
+          {
+            type: REMOVAL_ACCEPTED,
+            itemID:
+              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
+            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            challenger: null,
+            clicked: false
+          },
+          {
+            type: APPEALED,
+            itemID:
+              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
+            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
+            clicked: false
+          }
+        ]
+      }
+      res.send(notifications)
+    } catch (err) {
+      res.send({
+        message: 'Internal error, please contact administrators',
+        error: err.message,
+        status: 'failed'
+      })
+    }
+  })
+
+  return router
+}
+
+module.exports = buildRouter

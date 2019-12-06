@@ -1,7 +1,7 @@
 {
   "description": "A subscription request",
   "type": "object",
-  "required": ["userAddr", "arbitratorAddr", "gtcrAddr", "itemID", "requestID"],
+  "required": ["userAddr", "arbitratorAddr", "gtcrAddr", "itemID"],
   "properties": {
     "userAddr": {
       "type": "string",
@@ -22,10 +22,6 @@
       "type": "string",
       "minLength": 66,
       "maxLength": 66
-    },
-    "requestID": {
-      "type": "number",
-      "minimum": 0
     }
   }
 }

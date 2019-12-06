@@ -17,10 +17,11 @@
   "scripts": {
     "start": "node -r dotenv/config index.js",
     "dev": "nodemon -r dotenv/config index.js",
-    "lint": "eslint './*.js'"
+    "lint": "eslint './*.js'",
+    "clean": "rimraf ./db/* && nodetouch ./db/.gitignore"
   },
   "dependencies": {
-    "@kleros/tcr": "^0.1.26",
+    "@kleros/tcr": "^0.1.27",
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
@@ -28,6 +29,7 @@
     "ethers": "^4.0.40",
     "express": "^4.17.1",
     "json-schema": "^0.2.5",
+    "level": "^6.0.0",
     "morgan": "^1.9.1"
   },
   "devDependencies": {
@@ -45,7 +47,9 @@
     "husky": "^3.1.0",
     "nodemon": "^2.0.1",
     "prettier": "^1.19.1",
-    "standard-version": "^7.0.1"
+    "rimraf": "^3.0.0",
+    "standard-version": "^7.0.1",
+    "touch": "^3.1.0"
   },
   "standard": {
     "parser": "babel-eslint",
