@@ -28,7 +28,7 @@ const gtcrView = new ethers.Contract(
 
 const db = level('./db')
 const indexRouter = require('./routes')
-const apiRouter = require('./routes/api')(db)
+const apiRouter = require('./routes/api')(db, gtcrView)
 const {
   TCRS,
   INITIALIZED,
@@ -65,7 +65,7 @@ app.use('/api', apiRouter)
   const tcrs = JSON.parse(await db.get(TCRS))
   const fromBlock = await provider.getBlock()
   Object.keys(tcrs).forEach(tcrAddr => {
-    const tcrInstance = ethers.Contract(tcrAddr, _GTCR, provider)
+    const tcrInstance = new ethers.Contract(tcrAddr, _GTCR, provider)
 
     // Iterate through every user subscribed to events for this TCR and handle
     // each event.
@@ -93,7 +93,7 @@ app.use('/api', apiRouter)
                   ? SUBMISSION_CHALLENGED
                   : REMOVAL_CHALLENGED,
               itemID,
-              gtcrAddr: tcrAddr,
+              tcrAddr: tcrAddr,
               arbitrator,
               requester,
               challenger,

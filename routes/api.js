@@ -2,40 +2,57 @@ const express = require('express')
 const validateSchema = require('../schemas/validation')
 
 const router = express.Router()
-
+const { TCRS, ARBITRATORS } = require('../utils/db-keys')
 const {
-  NOTIFICATION_TYPES: { REMOVAL_ACCEPTED, SUBMISSION_CHALLENGED, APPEALED }
-} = require('../utils/types')
+  abi: _GTCRView
+} = require('@kleros/tcr/build/contracts/GeneralizedTCRView.json')
 
-const buildRouter = db => {
+const buildRouter = (db, gtcrView) => {
   router.post(
     '/subscribe',
     validateSchema('subscription'),
     async (req, res) => {
       try {
-        const { subscriberAddr, arbitratorAddr, gtcrAddr, itemID } = req.body
+        const { subscriberAddr, tcrAddr, itemID } = req.body
 
         // Check if user has notifications object initialized
         // and if not, initialize it.
         try {
           await db.get(subscriberAddr)
         } catch (err) {
-          if (err.type === 'NotFoundError')
-            await db.put(
-              JSON.stringify({
-                unread: false,
-                notifications: []
-              })
-            )
-
-          throw new Error(err)
+          if (!err.type === 'NotFoundError') throw new Error(err)
+          await db.put(
+            subscriberAddr,
+            JSON.stringify({
+              unread: false,
+              notifications: []
+            })
+          )
         }
 
+        // Initialize TCR watch list for the item it hasn't been already.
+        const tcrs = JSON.parse(await db.get(TCRS))
+        if (!tcrs[tcrAddr]) tcrs[tcrAddr] = {}
+        if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
+
+        tcrs[tcrAddr][subscriberAddr][itemID] = true
+
+        await db.put(TCRS, JSON.stringify(tcrs))
+
+        // Also watche for events from the arbitrator set to that request.
+        const item = await gtcrView.getItem(tcrAddr, itemID)
+        const { arbitrator: arbitratorAddr } = item
+        const arbitrators = JSON.parse(await db.get(ARBITRATORS))
+        if (!arbitrators[arbitratorAddr]) arbitrators[arbitratorAddr] = {}
+        if (!arbitrators[arbitratorAddr][subscriberAddr])
+          arbitrators[arbitratorAddr][subscriberAddr] = {}
+
+        arbitrators[arbitratorAddr][subscriberAddr][itemID] = true
+
+        await db.put(ARBITRATORS, JSON.stringify(arbitrators))
+
         res.send({
-          message: `Now saving events related to item
-          ${itemID} of the GTCR at ${gtcrAddr} for user ${subscriberAddr}. Events
-          from arbitrator at ${arbitratorAddr} related to this request will
-          also be saved.`,
+          message: `Now notifying ${subscriberAddr} of events related to ${itemID} of TCR at ${tcrAddr}`,
           status: 'success'
         })
       } catch (err) {
@@ -51,50 +68,20 @@ const buildRouter = db => {
   router.get('/notifications/:subscriberAddr', async (req, res) => {
     try {
       const { subscriberAddr } = req.params
-
-      // Mocking notifications for now.
-      const notifications = {
-        unread: false,
-        notifications: [
-          {
-            type: SUBMISSION_CHALLENGED,
-            itemID:
-              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            clicked: false
-          },
-          {
-            type: REMOVAL_ACCEPTED,
-            itemID:
-              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            challenger: null,
-            clicked: false
-          },
-          {
-            type: APPEALED,
-            itemID:
-              '0xd4d33ccd78728f3d7f8ea4ce26793d12efc45393a338b7f9f73e9f287017f9d4',
-            gtcrAddr: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            arbitrator: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            requester: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            challenger: '0x8b21581d19332aB6eC76CD682D623f21f6a298Ab',
-            clicked: false
-          }
-        ]
-      }
+      const notifications = JSON.parse(await db.get(subscriberAddr))
       res.send(notifications)
     } catch (err) {
-      res.send({
-        message: 'Internal error, please contact administrators',
-        error: err.message,
-        status: 'failed'
-      })
+      if (err.type === 'NotFoundError')
+        res.send({
+          unread: false,
+          notifications: []
+        })
+      else
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
     }
   })
 

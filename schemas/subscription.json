@@ -1,19 +1,14 @@
 {
   "description": "A subscription request",
   "type": "object",
-  "required": ["userAddr", "arbitratorAddr", "gtcrAddr", "itemID"],
+  "required": ["subscriberAddr", "tcrAddr", "itemID"],
   "properties": {
-    "userAddr": {
+    "subscriberAddr": {
       "type": "string",
       "minLength": 42,
       "maxLength": 42
     },
-    "arbitratorAddr": {
-      "type": "string",
-      "minLength": 42,
-      "maxLength": 42
-    },
-    "gtcrAddr": {
+    "tcrAddr": {
       "type": "string",
       "minLength": 42,
       "maxLength": 42
