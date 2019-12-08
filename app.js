@@ -46,10 +46,13 @@ app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use('/', indexRouter)
 app.use('/api', apiRouter)
-;(async () => {
+
+// Restart bot every 3 minutes to update listeners list.
+const UPDATE_INTERVAL = 3 * 60 * 1000
+setInterval(async () => {
   // Initialize stores if needed.
   try {
-    console.info('Db initialized:', await db.get(INITIALIZED))
+    await db.get(INITIALIZED)
   } catch (err) {
     if (err.type === 'NotFoundError') {
       console.info('Initializing DB')
@@ -62,6 +65,7 @@ app.use('/api', apiRouter)
   }
 
   // Setup listeners for each TCR being watched.
+  provider.removeAllListeners()
   const tcrs = JSON.parse(await db.get(TCRS))
   const fromBlock = await provider.getBlock()
   Object.keys(tcrs).forEach(tcrAddr => {
@@ -79,7 +83,9 @@ app.use('/api', apiRouter)
         )
 
         const item = await gtcrView.getItem(tcrAddr, itemID)
-        const { requester, challenger, status } = item
+        let { requester, challenger, status } = item
+        requester = ethers.utils.getAddress(requester) // Convert to checksummed address.
+        challenger = ethers.utils.getAddress(challenger) // Convert to checksummed address.
 
         Object.keys(tcrs[tcrAddr])
           .filter(subscriberAddr => tcrs[tcrAddr][subscriberAddr][itemID])
@@ -113,6 +119,6 @@ app.use('/api', apiRouter)
       }
     )
   })
-})()
+}, UPDATE_INTERVAL)
 
 module.exports = app

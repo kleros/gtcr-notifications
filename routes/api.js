@@ -1,5 +1,6 @@
 const express = require('express')
 const validateSchema = require('../schemas/validation')
+const ethers = require('ethers')
 
 const router = express.Router()
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
@@ -13,7 +14,11 @@ const buildRouter = (db, gtcrView) => {
     validateSchema('subscription'),
     async (req, res) => {
       try {
-        const { subscriberAddr, tcrAddr, itemID } = req.body
+        let { subscriberAddr, tcrAddr, itemID } = req.body
+
+        // Convert to checksummed address
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+        tcrAddr = ethers.utils.getAddress(tcrAddr)
 
         // Check if user has notifications object initialized
         // and if not, initialize it.
@@ -41,7 +46,9 @@ const buildRouter = (db, gtcrView) => {
 
         // Also watche for events from the arbitrator set to that request.
         const item = await gtcrView.getItem(tcrAddr, itemID)
-        const { arbitrator: arbitratorAddr } = item
+        let { arbitrator: arbitratorAddr } = item
+
+        arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
         if (!arbitrators[arbitratorAddr]) arbitrators[arbitratorAddr] = {}
         if (!arbitrators[arbitratorAddr][subscriberAddr])
@@ -67,7 +74,8 @@ const buildRouter = (db, gtcrView) => {
 
   router.get('/notifications/:subscriberAddr', async (req, res) => {
     try {
-      const { subscriberAddr } = req.params
+      let { subscriberAddr } = req.params
+      subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
       const notifications = JSON.parse(await db.get(subscriberAddr))
       res.send(notifications)
     } catch (err) {
