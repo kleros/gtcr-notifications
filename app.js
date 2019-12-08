@@ -85,7 +85,12 @@ app.use('/api', apiRouter)
           .filter(subscriberAddr => tcrs[tcrAddr][subscriberAddr][itemID])
           .filter(subscriberAddr => subscriberAddr !== challenger)
           .map(async subscriberAddr => {
-            const subscriberNotifications = await db.get(subscriberAddr)
+            let subscriberNotifications = { unread: false, notifications: [] }
+            try {
+              subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+            } catch (err) {
+              if (!err.type === 'NotFoundError') throw new Error(err)
+            }
             subscriberNotifications.unread = true
             subscriberNotifications.notifications.push({
               type:
@@ -99,6 +104,11 @@ app.use('/api', apiRouter)
               challenger,
               clicked: false
             })
+
+            await db.put(
+              subscriberAddr,
+              JSON.stringify(subscriberNotifications)
+            )
           })
       }
     )
