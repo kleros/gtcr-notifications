@@ -4,9 +4,6 @@ const ethers = require('ethers')
 
 const router = express.Router()
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
-const {
-  abi: _GTCRView
-} = require('@kleros/tcr/build/contracts/GeneralizedTCRView.json')
 
 const buildRouter = (db, gtcrView) => {
   router.post(
@@ -14,7 +11,7 @@ const buildRouter = (db, gtcrView) => {
     validateSchema('subscription'),
     async (req, res) => {
       try {
-        let { subscriberAddr, tcrAddr, itemID } = req.body
+        let { subscriberAddr, tcrAddr, itemID, networkID } = req.body
 
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
@@ -37,10 +34,11 @@ const buildRouter = (db, gtcrView) => {
 
         // Initialize TCR watch list for the item it hasn't been already.
         const tcrs = JSON.parse(await db.get(TCRS))
-        if (!tcrs[tcrAddr]) tcrs[tcrAddr] = {}
-        if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
+        if(!tcrs[networkID]) tcrs[networkID] = {}
+        if (!tcrs[networkID][tcrAddr]) tcrs[networkID][tcrAddr] = {}
+        if (!tcrs[networkID][tcrAddr][subscriberAddr]) tcrs[networkID][tcrAddr][subscriberAddr] = {}
 
-        tcrs[tcrAddr][subscriberAddr][itemID] = true
+        tcrs[networkID][tcrAddr][subscriberAddr][itemID] = true
 
         await db.put(TCRS, JSON.stringify(tcrs))
 
@@ -50,11 +48,12 @@ const buildRouter = (db, gtcrView) => {
 
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
-        if (!arbitrators[arbitratorAddr]) arbitrators[arbitratorAddr] = {}
-        if (!arbitrators[arbitratorAddr][subscriberAddr])
-          arbitrators[arbitratorAddr][subscriberAddr] = {}
+        if(!arbitrators[[networkID]]) arbitrators[networkID] = {}
+        if (!arbitrators[networkID][arbitratorAddr]) arbitrators[networkID][arbitratorAddr] = {}
+        if (!arbitrators[networkID][arbitratorAddr][subscriberAddr])
+          arbitrators[networkID][arbitratorAddr][subscriberAddr] = {}
 
-        arbitrators[arbitratorAddr][subscriberAddr][itemID] = true
+        arbitrators[networkID][arbitratorAddr][subscriberAddr][itemID] = true
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
 
@@ -72,18 +71,21 @@ const buildRouter = (db, gtcrView) => {
     }
   )
 
-  router.get('/notifications/:subscriberAddr', async (req, res) => {
-    try {
-      let { subscriberAddr } = req.params
+  router.get('/notifications/:subscriberAddr/:networkID/', async (req, res) => {
+    let { subscriberAddr, networkID } = req.params
+    let notifications = {
+      [networkID]: {
+        unread: false,
+        notifications: []
+      }
+    }
+    try {      
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
-      const notifications = JSON.parse(await db.get(subscriberAddr))
-      res.send(notifications)
+      if ((JSON.parse(await db.get(subscriberAddr)))[networkID]) notifications = JSON.parse(await db.get(subscriberAddr))
+      res.send(notifications[networkID])
     } catch (err) {
       if (err.type === 'NotFoundError')
-        res.send({
-          unread: false,
-          notifications: []
-        })
+        res.send(notifications[networkID])
       else
         res.send({
           message: 'Internal error, please contact administrators',

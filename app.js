@@ -48,7 +48,7 @@ app.use('/', indexRouter)
 app.use('/api', apiRouter)
 
 // Restart bot every 3 minutes to update listeners list.
-const UPDATE_INTERVAL = 3 * 60 * 1000
+const UPDATE_INTERVAL = 40 * 1000
 setInterval(async () => {
   // Initialize stores if needed.
   try {
@@ -60,14 +60,19 @@ setInterval(async () => {
       await db.put(TCRS, JSON.stringify({}))
       await db.put(ARBITRATORS, JSON.stringify({}))
       await db.put(SUBSCRIBERS, JSON.stringify({}))
-    }
-    throw new Error(err)
+    } else throw new Error(err)
   }
 
   // Setup listeners for each TCR being watched.
   provider.removeAllListeners()
-  const tcrs = JSON.parse(await db.get(TCRS))
-  const fromBlock = await provider.getBlock()
+  const [fromBlock, networkInfo] = await Promise.all([
+    provider.getBlock(),
+    provider.getNetwork()
+  ])
+  const networkID = networkInfo.chainId
+  const tcrs = JSON.parse(await db.get(TCRS))[networkID]
+    ? JSON.parse(await db.get(TCRS))[networkID]
+    : {}
   Object.keys(tcrs).forEach(tcrAddr => {
     const tcrInstance = new ethers.Contract(tcrAddr, _GTCR, provider)
 
@@ -91,14 +96,20 @@ setInterval(async () => {
           .filter(subscriberAddr => tcrs[tcrAddr][subscriberAddr][itemID])
           .filter(subscriberAddr => subscriberAddr !== challenger)
           .map(async subscriberAddr => {
-            let subscriberNotifications = { unread: false, notifications: [] }
+            let subscriberNotifications = {}
             try {
               subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
             } catch (err) {
               if (!err.type === 'NotFoundError') throw new Error(err)
             }
-            subscriberNotifications.unread = true
-            subscriberNotifications.notifications.push({
+            if (!subscriberNotifications[networkID])
+              subscriberNotifications[networkID] = {
+                unread: false,
+                notifications: []
+              }
+
+            subscriberNotifications[networkID].unread = true
+            subscriberNotifications[networkID].notifications.push({
               type:
                 status === REGISTRATION_REQUESTED
                   ? SUBMISSION_CHALLENGED

@@ -1,7 +1,7 @@
 {
   "description": "A subscription request",
   "type": "object",
-  "required": ["subscriberAddr", "tcrAddr", "itemID"],
+  "required": ["subscriberAddr", "tcrAddr", "itemID", "networkID"],
   "properties": {
     "subscriberAddr": {
       "type": "string",
@@ -17,6 +17,9 @@
       "type": "string",
       "minLength": 66,
       "maxLength": 66
+    },
+    "networkID": {
+      "type": "number"
     }
   }
 }
