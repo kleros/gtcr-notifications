@@ -99,10 +99,39 @@ const buildRouter = (db, gtcrView) => {
 
   // Mark a notification with clicked.
   router.patch(
-    '/notification',
-    validateSchema('notification'),
+    '/notification/:subscriberAddr/:networkID/:notificationID',    
     async (req, res) => {
-      
+      try {
+        let { subscriberAddr, networkID, notificationID } = req.params
+        // Convert to checksummed address
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
+               
+        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        if (!subscriberNotifications[networkID] ) {
+          res.send({ status: 404, message: 'Notification not found.' })    
+          return
+        }
+
+        const notificationIndex = subscriberNotifications[networkID].notifications
+          .findIndex(notification => notification.notificationID === notificationID)
+        if (notificationIndex === -1) {
+          res.send({ status: 404, message: 'Notification not found.' })    
+          return
+        }
+
+        subscriberNotifications[networkID].notifications[notificationIndex].clicked = true
+        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        res.send({ status: 200 })    
+      } catch (err) {
+        if (err.type === 'NotFoundError')          
+          res.send({ status: 200 })        
+        else
+          res.send({
+            message: 'Internal error, please contact administrators',
+            error: err.message,
+            status: 'failed'
+          })
+      }
     }
   )
 
