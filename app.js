@@ -7,6 +7,7 @@ if (!process.env.GTCR_VIEW_ADDRESS)
   throw new Error('Missing GTCR View contract address set.')
 
 const level = require('level')
+const uuidv4 = require('./utils/uuid')
 const express = require('express')
 const logger = require('morgan')
 const bodyParser = require('body-parser')
@@ -119,7 +120,8 @@ setInterval(async () => {
               arbitrator,
               requester,
               challenger,
-              clicked: false
+              clicked: false,
+              notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
             })
 
             await db.put(

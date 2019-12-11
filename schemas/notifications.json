@@ -1,0 +1,12 @@
+{
+  "description": "A subscription request",
+  "type": "object",
+  "required": ["subscriberAddr"],
+  "properties": {
+    "subscriberAddr": {
+      "type": "string",
+      "minLength": 42,
+      "maxLength": 42
+    }    
+  }
+}

@@ -6,6 +6,7 @@ const router = express.Router()
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
 
 const buildRouter = (db, gtcrView) => {
+  // Subscribe to request.
   router.post(
     '/subscribe',
     validateSchema('subscription'),
@@ -71,6 +72,7 @@ const buildRouter = (db, gtcrView) => {
     }
   )
 
+  // Get notifications for an account.
   router.get('/notifications/:subscriberAddr/:networkID/', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
     let notifications = {
@@ -94,6 +96,42 @@ const buildRouter = (db, gtcrView) => {
         })
     }
   })
+
+  // Mark a notification with clicked.
+  router.patch(
+    '/notification',
+    validateSchema('notification'),
+    async (req, res) => {
+      
+    }
+  )
+
+  // Mark a notifications as read.
+  router.patch(
+    '/notification',
+    validateSchema('notifications'),
+    async (req, res) => {
+      tr
+    }
+  )
+
+  // Delete a notification.
+  router.delete(
+    '/notification',
+    validateSchema('notification'),
+    async (req, res) => {
+      
+    }
+  )
+
+  // Delete all notifications for a user.
+  router.delete(
+    '/notifications',
+    validateSchema('notifications'),
+    async (req, res) => {
+      
+    }
+  )
 
   return router
 }
