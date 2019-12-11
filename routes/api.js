@@ -106,12 +106,35 @@ const buildRouter = (db, gtcrView) => {
     }
   )
 
-  // Mark a notifications as read.
+  // Mark notifications as read.
   router.patch(
-    '/notification',
-    validateSchema('notifications'),
+    '/notifications/:subscriberAddr/:networkID',
     async (req, res) => {
-      tr
+      try {
+        let { subscriberAddr, networkID } = req.params
+        // Convert to checksummed address
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
+               
+        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        if (!subscriberNotifications[networkID]) {
+          res.send({ status: 200 })    
+          console.info('no notifications for ', networkID)
+          return
+        }
+
+        subscriberNotifications[networkID].unread = false
+        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        res.send({ status: 200 })    
+      } catch (err) {
+        if (err.type === 'NotFoundError')          
+          res.send({ status: 200 })        
+        else
+          res.send({
+            message: 'Internal error, please contact administrators',
+            error: err.message,
+            status: 'failed'
+          })
+      }
     }
   )
 
