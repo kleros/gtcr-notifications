@@ -40,7 +40,6 @@ const buildRouter = (db, gtcrView) => {
         if (!tcrs[networkID][tcrAddr][subscriberAddr]) tcrs[networkID][tcrAddr][subscriberAddr] = {}
 
         tcrs[networkID][tcrAddr][subscriberAddr][itemID] = true
-
         await db.put(TCRS, JSON.stringify(tcrs))
 
         // Also watche for events from the arbitrator set to that request.

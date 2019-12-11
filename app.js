@@ -47,10 +47,7 @@ app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use('/', indexRouter)
 app.use('/api', apiRouter)
-
-// Restart bot every 3 minutes to update listeners list.
-const UPDATE_INTERVAL = 40 * 1000
-setInterval(async () => {
+;(async () => {
   // Initialize stores if needed.
   try {
     await db.get(INITIALIZED)
@@ -64,74 +61,85 @@ setInterval(async () => {
     } else throw new Error(err)
   }
 
-  // Setup listeners for each TCR being watched.
-  provider.removeAllListeners()
-  const [fromBlock, networkInfo] = await Promise.all([
-    provider.getBlock(),
-    provider.getNetwork()
-  ])
-  const networkID = networkInfo.chainId
-  const tcrs = JSON.parse(await db.get(TCRS))[networkID]
-    ? JSON.parse(await db.get(TCRS))[networkID]
-    : {}
-  Object.keys(tcrs).forEach(tcrAddr => {
-    const tcrInstance = new ethers.Contract(tcrAddr, _GTCR, provider)
+  // Restart bot every 3 minutes to update listeners list.
+  const UPDATE_INTERVAL = 3 * 60 * 1000
+  const updateTCRListeners = async () => {
+    // Setup listeners for each TCR being watched.
+    provider.removeAllListeners()
+    const [fromBlock, networkInfo] = await Promise.all([
+      provider.getBlock(),
+      provider.getNetwork()
+    ])
+    const { chainId: networkID } = networkInfo
+    const tcrs = JSON.parse(await db.get(TCRS))[networkID]
+      ? JSON.parse(await db.get(TCRS))[networkID]
+      : {}
+    Object.keys(tcrs).forEach(tcrAddr => {
+      const tcrInstance = new ethers.Contract(tcrAddr, _GTCR, provider)
 
-    // Iterate through every user subscribed to events for this TCR and handle
-    // each event.
-    tcrInstance.on(
-      { ...tcrInstance.filters.Dispute(), fromBlock },
-      async (arbitrator, disputeID) => {
-        // Find which users are subscribed to this item.
-        const itemID = await tcrInstance.arbitratorDisputeIDToItem(
-          arbitrator,
-          disputeID
-        )
+      // Iterate through every user subscribed to events for this TCR and handle
+      // each event.
+      tcrInstance.on(
+        { ...tcrInstance.filters.Dispute(), fromBlock },
+        async (arbitrator, disputeID) => {
+          // Find which users are subscribed to this item.
+          const itemID = await tcrInstance.arbitratorDisputeIDToItem(
+            arbitrator,
+            disputeID
+          )
 
-        const item = await gtcrView.getItem(tcrAddr, itemID)
-        let { requester, challenger, status } = item
-        requester = ethers.utils.getAddress(requester) // Convert to checksummed address.
-        challenger = ethers.utils.getAddress(challenger) // Convert to checksummed address.
+          const item = await gtcrView.getItem(tcrAddr, itemID)
+          let { requester, challenger, status } = item
+          requester = ethers.utils.getAddress(requester) // Convert to checksummed address.
+          challenger = ethers.utils.getAddress(challenger) // Convert to checksummed address.
+          const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
 
-        Object.keys(tcrs[tcrAddr])
-          .filter(subscriberAddr => tcrs[tcrAddr][subscriberAddr][itemID])
-          .filter(subscriberAddr => subscriberAddr !== challenger)
-          .map(async subscriberAddr => {
-            let subscriberNotifications = {}
-            try {
-              subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-            } catch (err) {
-              if (!err.type === 'NotFoundError') throw new Error(err)
-            }
-            if (!subscriberNotifications[networkID])
-              subscriberNotifications[networkID] = {
-                unread: false,
-                notifications: []
-              }
-
-            subscriberNotifications[networkID].unread = true
-            subscriberNotifications[networkID].notifications.push({
-              type:
-                status === REGISTRATION_REQUESTED
-                  ? SUBMISSION_CHALLENGED
-                  : REMOVAL_CHALLENGED,
-              itemID,
-              tcrAddr: tcrAddr,
-              arbitrator,
-              requester,
-              challenger,
-              clicked: false,
-              notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
-            })
-
-            await db.put(
-              subscriberAddr,
-              JSON.stringify(subscriberNotifications)
+          Object.keys(latestTcrObj[tcrAddr])
+            .filter(
+              subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID]
             )
-          })
-      }
-    )
-  })
-}, UPDATE_INTERVAL)
+            .filter(subscriberAddr => subscriberAddr !== challenger)
+            .map(async subscriberAddr => {
+              let subscriberNotifications = {}
+              try {
+                subscriberNotifications = JSON.parse(
+                  await db.get(subscriberAddr)
+                )
+              } catch (err) {
+                if (!err.type === 'NotFoundError') throw new Error(err)
+              }
+              if (!subscriberNotifications[networkID])
+                subscriberNotifications[networkID] = {
+                  unread: false,
+                  notifications: []
+                }
+
+              subscriberNotifications[networkID].unread = true
+              subscriberNotifications[networkID].notifications.push({
+                type:
+                  status === REGISTRATION_REQUESTED
+                    ? SUBMISSION_CHALLENGED
+                    : REMOVAL_CHALLENGED,
+                itemID,
+                tcrAddr: tcrAddr,
+                arbitrator,
+                requester,
+                challenger,
+                clicked: false,
+                notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
+              })
+
+              await db.put(
+                subscriberAddr,
+                JSON.stringify(subscriberNotifications)
+              )
+            })
+        }
+      )
+    })
+  }
+  updateTCRListeners()
+  setInterval(updateTCRListeners, UPDATE_INTERVAL)
+})()
 
 module.exports = app
