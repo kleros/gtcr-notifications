@@ -73,7 +73,7 @@ const buildRouter = (db, gtcrView) => {
   )
 
   // Get notifications for an account.
-  router.get('/notifications/:subscriberAddr/:networkID/', async (req, res) => {
+  router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
     let notifications = {
       [networkID]: {
@@ -147,7 +147,6 @@ const buildRouter = (db, gtcrView) => {
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
         if (!subscriberNotifications[networkID]) {
           res.send({ status: 200 })    
-          console.info('no notifications for ', networkID)
           return
         }
 
