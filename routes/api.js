@@ -205,12 +205,29 @@ const buildRouter = (db, gtcrView) => {
     }
   )
 
-  // Delete all notifications for a user.
+  // Delete all notifications for a user and networkID.
   router.delete(
-    '/notifications',
-    validateSchema('notifications'),
+    '/notifications/:subscriberAddr/:networkID',
     async (req, res) => {
-      
+      try {
+        let { subscriberAddr, networkID } = req.params
+        // Convert to checksummed address
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
+               
+        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        subscriberNotifications[networkID] = { unread: false, notifications: []}
+        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        res.send({ status: 200 })    
+      } catch (err) {
+        if (err.type === 'NotFoundError')          
+          res.send({ status: 200 })        
+        else
+          res.send({
+            message: 'Internal error, please contact administrators',
+            error: err.message,
+            status: 'failed'
+          })
+      }
     }
   )
 
