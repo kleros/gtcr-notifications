@@ -1,25 +1,29 @@
 const ethers = require('ethers')
 const { TCRS } = require('../utils/db-keys')
 const uuidv4 = require('../utils/uuid')
-const { NOTIFICATION_TYPES: { EVIDENCE_SUBMITTED } } = require('../utils/types')
+const {
+  NOTIFICATION_TYPES: { EVIDENCE_SUBMITTED }
+} = require('../utils/types')
 
-module.exports = ({ tcrInstance, db, networkID }) => async (_arbitrator, evidenceGroupID, submitter) => {
-  const { itemID } = await tcrInstance.evidenceGroupIDToRequestID(evidenceGroupID)
+module.exports = ({ tcrInstance, db, networkID }) => async (
+  _arbitrator,
+  evidenceGroupID,
+  submitter
+) => {
+  const { itemID } = await tcrInstance.evidenceGroupIDToRequestID(
+    evidenceGroupID
+  )
   const { address: tcrAddr } = tcrInstance
   submitter = ethers.utils.getAddress(submitter)
-  
+
   const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
   Object.keys(latestTcrObj[tcrAddr])
-    .filter(
-      subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID]      
-    )
+    .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
     .filter(subscriberAddr => subscriberAddr !== submitter)
     .map(async subscriberAddr => {
       let subscriberNotifications = {}
       try {
-        subscriberNotifications = JSON.parse(
-          await db.get(subscriberAddr)
-        )
+        subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
       } catch (err) {
         if (!err.type === 'NotFoundError') throw new Error(err)
       }
@@ -38,9 +42,6 @@ module.exports = ({ tcrInstance, db, networkID }) => async (_arbitrator, evidenc
         notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
       })
 
-      await db.put(
-        subscriberAddr,
-        JSON.stringify(subscriberNotifications)
-      )
+      await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
     })
 }

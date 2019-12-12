@@ -18,7 +18,8 @@
     "start": "node -r dotenv/config index.js",
     "dev": "nodemon -r dotenv/config index.js",
     "lint": "eslint './*.js'",
-    "clean": "rimraf ./db/* && nodetouch ./db/.gitignore"
+    "clean": "rimraf ./db/* && nodetouch ./db/.gitignore",
+    "prettier": "prettier --write '**/*.js'"
   },
   "dependencies": {
     "@kleros/tcr": "^0.1.27",

@@ -1,6 +1,8 @@
 const express = require('express')
 const ethers = require('ethers')
-const { abi: _GTCR } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
+const {
+  abi: _GTCR
+} = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
 
 const validateSchema = require('../schemas/validation')
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
@@ -40,9 +42,10 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
 
         // Initialize TCR watch list for the item it hasn't been already.
         const tcrs = JSON.parse(await db.get(TCRS))
-        if(!tcrs[networkID]) tcrs[networkID] = {}
+        if (!tcrs[networkID]) tcrs[networkID] = {}
         if (!tcrs[networkID][tcrAddr]) tcrs[networkID][tcrAddr] = {}
-        if (!tcrs[networkID][tcrAddr][subscriberAddr]) tcrs[networkID][tcrAddr][subscriberAddr] = {}
+        if (!tcrs[networkID][tcrAddr][subscriberAddr])
+          tcrs[networkID][tcrAddr][subscriberAddr] = {}
 
         tcrs[networkID][tcrAddr][subscriberAddr][itemID] = true
         await db.put(TCRS, JSON.stringify(tcrs))
@@ -50,14 +53,30 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
         // Instantiate tcr and add listeners if needed.
         // TODO: Add listeners for other events as well.
         const fromBlock = await provider.getBlock()
-        if (!tcrInstances[tcrAddr]) tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-        if (provider.listeners({ topics: [gtcrInterface.events.Dispute.topic], address: tcrAddr }).length === 0) {          
+        if (!tcrInstances[tcrAddr])
+          tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
+        if (
+          provider.listeners({
+            topics: [gtcrInterface.events.Dispute.topic],
+            address: tcrAddr
+          }).length === 0
+        ) {
           tcrInstances[tcrAddr].on(
             { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
-            disputeCallback({ tcrInstance: tcrInstances[tcrAddr], gtcrView, db, networkID })
+            disputeCallback({
+              tcrInstance: tcrInstances[tcrAddr],
+              gtcrView,
+              db,
+              networkID
+            })
           )
         }
-        if (provider.listeners({ topics: [gtcrInterface.events.Evidence.topic], address: tcrAddr }).length === 0) {
+        if (
+          provider.listeners({
+            topics: [gtcrInterface.events.Evidence.topic],
+            address: tcrAddr
+          }).length === 0
+        ) {
           tcrInstances[tcrAddr].on(
             { ...tcrInstances[tcrAddr].filters.Evidence(), fromBlock },
             evidenceCallback({
@@ -74,8 +93,9 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
 
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
-        if(!arbitrators[[networkID]]) arbitrators[networkID] = {}
-        if (!arbitrators[networkID][arbitratorAddr]) arbitrators[networkID][arbitratorAddr] = {}
+        if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
+        if (!arbitrators[networkID][arbitratorAddr])
+          arbitrators[networkID][arbitratorAddr] = {}
         if (!arbitrators[networkID][arbitratorAddr][subscriberAddr])
           arbitrators[networkID][arbitratorAddr][subscriberAddr] = {}
 
@@ -108,13 +128,13 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
         notifications: []
       }
     }
-    try {      
+    try {
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
-      if ((JSON.parse(await db.get(subscriberAddr)))[networkID]) notifications = JSON.parse(await db.get(subscriberAddr))
+      if (JSON.parse(await db.get(subscriberAddr))[networkID])
+        notifications = JSON.parse(await db.get(subscriberAddr))
       res.send(notifications[networkID])
     } catch (err) {
-      if (err.type === 'NotFoundError')
-        res.send(notifications[networkID])
+      if (err.type === 'NotFoundError') res.send(notifications[networkID])
       else
         res.send({
           message: 'Internal error, please contact administrators',
@@ -126,32 +146,36 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
 
   // Mark a notification with clicked.
   router.patch(
-    '/notification/:subscriberAddr/:networkID/:notificationID',    
+    '/notification/:subscriberAddr/:networkID/:notificationID',
     async (req, res) => {
       try {
         let { subscriberAddr, networkID, notificationID } = req.params
         // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
-               
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        if (!subscriberNotifications[networkID] ) {
-          res.send({ status: 404, message: 'Notification not found.' })    
+        if (!subscriberNotifications[networkID]) {
+          res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        const notificationIndex = subscriberNotifications[networkID].notifications
-          .findIndex(notification => notification.notificationID === notificationID)
+        const notificationIndex = subscriberNotifications[
+          networkID
+        ].notifications.findIndex(
+          notification => notification.notificationID === notificationID
+        )
         if (notificationIndex === -1) {
-          res.send({ status: 404, message: 'Notification not found.' })    
+          res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        subscriberNotifications[networkID].notifications[notificationIndex].clicked = true
+        subscriberNotifications[networkID].notifications[
+          notificationIndex
+        ].clicked = true
         db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })    
+        res.send({ status: 200 })
       } catch (err) {
-        if (err.type === 'NotFoundError')          
-          res.send({ status: 200 })        
+        if (err.type === 'NotFoundError') res.send({ status: 200 })
         else
           res.send({
             message: 'Internal error, please contact administrators',
@@ -169,20 +193,19 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
       try {
         let { subscriberAddr, networkID } = req.params
         // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
-               
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
         if (!subscriberNotifications[networkID]) {
-          res.send({ status: 200 })    
+          res.send({ status: 200 })
           return
         }
 
         subscriberNotifications[networkID].unread = false
         db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })    
+        res.send({ status: 200 })
       } catch (err) {
-        if (err.type === 'NotFoundError')          
-          res.send({ status: 200 })        
+        if (err.type === 'NotFoundError') res.send({ status: 200 })
         else
           res.send({
             message: 'Internal error, please contact administrators',
@@ -200,27 +223,32 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
       try {
         let { subscriberAddr, networkID, notificationID } = req.params
         // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
-               
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        if (!subscriberNotifications[networkID] ) {
-          res.send({ status: 404, message: 'Notification not found.' })    
+        if (!subscriberNotifications[networkID]) {
+          res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        const notificationIndex = subscriberNotifications[networkID].notifications
-          .findIndex(notification => notification.notificationID === notificationID)
+        const notificationIndex = subscriberNotifications[
+          networkID
+        ].notifications.findIndex(
+          notification => notification.notificationID === notificationID
+        )
         if (notificationIndex === -1) {
-          res.send({ status: 404, message: 'Notification not found.' })    
+          res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        subscriberNotifications[networkID].notifications.splice(notificationIndex, 1)
+        subscriberNotifications[networkID].notifications.splice(
+          notificationIndex,
+          1
+        )
         db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })    
+        res.send({ status: 200 })
       } catch (err) {
-        if (err.type === 'NotFoundError')          
-          res.send({ status: 200 })        
+        if (err.type === 'NotFoundError') res.send({ status: 200 })
         else
           res.send({
             message: 'Internal error, please contact administrators',
@@ -238,15 +266,17 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
       try {
         let { subscriberAddr, networkID } = req.params
         // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr) 
-               
+        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        subscriberNotifications[networkID] = { unread: false, notifications: []}
+        subscriberNotifications[networkID] = {
+          unread: false,
+          notifications: []
+        }
         db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })    
+        res.send({ status: 200 })
       } catch (err) {
-        if (err.type === 'NotFoundError')          
-          res.send({ status: 200 })        
+        if (err.type === 'NotFoundError') res.send({ status: 200 })
         else
           res.send({
             message: 'Internal error, please contact administrators',
