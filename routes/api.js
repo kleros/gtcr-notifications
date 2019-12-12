@@ -1,11 +1,15 @@
 const express = require('express')
-const validateSchema = require('../schemas/validation')
 const ethers = require('ethers')
+const { abi: _GTCR } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
 
-const router = express.Router()
+const validateSchema = require('../schemas/validation')
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
+const disputeCallback = require('../events/dispute')
+const router = express.Router()
 
-const buildRouter = (db, gtcrView) => {
+const gtcrInterface = new ethers.utils.Interface(_GTCR)
+
+const buildRouter = (db, gtcrView, provider, tcrInstances) => {
   // Subscribe to request.
   router.post(
     '/subscribe',
@@ -42,7 +46,17 @@ const buildRouter = (db, gtcrView) => {
         tcrs[networkID][tcrAddr][subscriberAddr][itemID] = true
         await db.put(TCRS, JSON.stringify(tcrs))
 
-        // Also watche for events from the arbitrator set to that request.
+        // Instantiate tcr and add listeners if needed.
+        if (!tcrInstances[tcrAddr]) tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
+        if (provider.listeners({ topics: [gtcrInterface.events.Dispute.topic], address: tcrAddr }).length === 0) {
+          // TODO: Add listeners for other events as well.
+          tcrInstances[tcrAddr].on(
+            { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
+            disputeCallback({ tcrInstance: tcrInstances[tcrAddr] })
+          )
+        }
+
+        // Also watch for events from the arbitrator set to that request.
         const item = await gtcrView.getItem(tcrAddr, itemID)
         let { arbitrator: arbitratorAddr } = item
 
@@ -56,6 +70,8 @@ const buildRouter = (db, gtcrView) => {
         arbitrators[networkID][arbitratorAddr][subscriberAddr][itemID] = true
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
+
+        // TODO: Add arbitrator listeners if they are note there already.
 
         res.send({
           message: `Now notifying ${subscriberAddr} of events related to ${itemID} of TCR at ${tcrAddr}`,
