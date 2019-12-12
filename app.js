@@ -28,6 +28,7 @@ const tcrInstances = {}
     abi: _GTCR
   } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
   const disputeCallback = require('./events/dispute')
+  const evidenceCallback = require('./events/evidence')
   const {
     TCRS,
     INITIALIZED,
@@ -62,11 +63,24 @@ const tcrInstances = {}
   // each event.
   Object.keys(tcrs).forEach(tcrAddr => {
     tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-
-    tcrInstances[tcrAddr].on(
-      { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
-      disputeCallback({ tcrInstance: tcrInstances[tcrAddr] })
-    )
+    tcrInstances[tcrAddr]
+      .on(
+        { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
+        disputeCallback({
+          tcrInstance: tcrInstances[tcrAddr],
+          gtcrView,
+          db,
+          networkID
+        })
+      )
+      .on(
+        { ...tcrInstances[tcrAddr].filters.Evidence(), fromBlock },
+        evidenceCallback({
+          tcrInstance: tcrInstances[tcrAddr],
+          db,
+          networkID
+        })
+      )
   })
 })()
 

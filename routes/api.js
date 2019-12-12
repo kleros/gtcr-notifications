@@ -4,8 +4,9 @@ const { abi: _GTCR } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json'
 
 const validateSchema = require('../schemas/validation')
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
-const disputeCallback = require('../events/dispute')
 const router = express.Router()
+const disputeCallback = require('../events/dispute')
+const evidenceCallback = require('../events/evidence')
 
 const gtcrInterface = new ethers.utils.Interface(_GTCR)
 
@@ -47,12 +48,23 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
         await db.put(TCRS, JSON.stringify(tcrs))
 
         // Instantiate tcr and add listeners if needed.
+        // TODO: Add listeners for other events as well.
+        const fromBlock = await provider.getBlock()
         if (!tcrInstances[tcrAddr]) tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-        if (provider.listeners({ topics: [gtcrInterface.events.Dispute.topic], address: tcrAddr }).length === 0) {
-          // TODO: Add listeners for other events as well.
+        if (provider.listeners({ topics: [gtcrInterface.events.Dispute.topic], address: tcrAddr }).length === 0) {          
           tcrInstances[tcrAddr].on(
             { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
-            disputeCallback({ tcrInstance: tcrInstances[tcrAddr] })
+            disputeCallback({ tcrInstance: tcrInstances[tcrAddr], gtcrView, db, networkID })
+          )
+        }
+        if (provider.listeners({ topics: [gtcrInterface.events.Evidence.topic], address: tcrAddr }).length === 0) {
+          tcrInstances[tcrAddr].on(
+            { ...tcrInstances[tcrAddr].filters.Evidence(), fromBlock },
+            evidenceCallback({
+              tcrInstance: tcrInstances[tcrAddr],
+              db,
+              networkID
+            })
           )
         }
 

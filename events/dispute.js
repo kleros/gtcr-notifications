@@ -47,10 +47,7 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (arbitrator
               ? SUBMISSION_CHALLENGED
               : REMOVAL_CHALLENGED,
           itemID,
-          tcrAddr: tcrAddr,
-          arbitrator,
-          requester,
-          challenger,
+          tcrAddr,
           clicked: false,
           notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
         })
