@@ -33,13 +33,18 @@ const arbitratorInstances = {}
 ;(async () => {
   const disputeCallback = require('./events/dispute')
   const evidenceCallback = require('./events/evidence')
-  const requestExecutedCallback = require('./events/request-executed')
+  const resolvedCallback = require('./events/resolved')
+  const appealableRulingCallback = require('./events/appeal-possible')
+  const appealCallback = require('./events/appeal-decision')
   const tcrEventToCallback = {
     Evidence: evidenceCallback,
     Dispute: disputeCallback,
-    ItemStatusChange: requestExecutedCallback
+    ItemStatusChange: resolvedCallback
   }
-  const arbitratorEventToCallback = {}
+  const arbitratorEventToCallback = {
+    AppealPossible: appealableRulingCallback,
+    AppealDecision: appealCallback
+  }
 
   const {
     TCRS,

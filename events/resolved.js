@@ -12,19 +12,24 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
   _disputed,
   _resolved
 ) => {
-  // Ignore if status change event is not due to the execution of an unchallenged request.
-  if (!resolved || _disputed) return
+  // Ignore status change events of unresolved requests.
+  if (!resolved) return
 
   const { address: tcrAddr } = tcrInstance
   const { status } = await gtcrView.getItem(tcrAddr, itemID)
 
   const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
+
   Object.keys(latestTcrObj[tcrAddr])
     .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
     .forEach(async subscriberAddr =>
       addNotification(
         {
-          type: status === REGISTERED ? SUBMISSION_ACCEPTED : REMOVAL_ACCEPTED,
+          type: _disputed
+            ? FINAL_RULING
+            : status === REGISTERED
+            ? SUBMISSION_ACCEPTED
+            : REMOVAL_ACCEPTED,
           itemID,
           tcrAddr,
           clicked: false,

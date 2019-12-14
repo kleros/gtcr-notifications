@@ -12,16 +12,21 @@ const { TCRS, ARBITRATORS } = require('../utils/db-keys')
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
 const evidenceCallback = require('../events/evidence')
-const requestExecutedCallback = require('./events/request-executed')
+const resolvedCallback = require('./events/resolved')
+const appealableRulingCallback = require('./events/appeal-possible')
+const appealCallback = require('./events/appeal-decision')
 
 const gtcrInterface = new ethers.utils.Interface(_GTCR)
 const arbitratorInterface = new ethers.utils.Interface(_IArbitrator)
 const tcrEventToCallback = {
   Evidence: evidenceCallback,
   Dispute: disputeCallback,
-  ItemStatusChange: requestExecutedCallback
+  ItemStatusChange: resolvedCallback
 }
-const arbitratorEventToCallback = {}
+const arbitratorEventToCallback = {
+  AppealPossible: appealableRulingCallback,
+  AppealDecision: appealCallback
+}
 
 const buildRouter = (
   db,
