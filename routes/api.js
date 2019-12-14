@@ -3,16 +3,33 @@ const ethers = require('ethers')
 const {
   abi: _GTCR
 } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
+const {
+  abi: _IArbitrator
+} = require('@kleros/tcr/build/contracts/IArbitrator.json')
 
 const validateSchema = require('../schemas/validation')
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
 const evidenceCallback = require('../events/evidence')
+const requestExecutedCallback = require('./events/request-executed')
 
 const gtcrInterface = new ethers.utils.Interface(_GTCR)
+const arbitratorInterface = new ethers.utils.Interface(_IArbitrator)
+const tcrEventToCallback = {
+  Evidence: evidenceCallback,
+  Dispute: disputeCallback,
+  ItemStatusChange: requestExecutedCallback
+}
+const arbitratorEventToCallback = {}
 
-const buildRouter = (db, gtcrView, provider, tcrInstances) => {
+const buildRouter = (
+  db,
+  gtcrView,
+  provider,
+  tcrInstances,
+  arbitratorInstances
+) => {
   // Subscribe to request.
   router.post(
     '/subscribe',
@@ -51,41 +68,28 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
         await db.put(TCRS, JSON.stringify(tcrs))
 
         // Instantiate tcr and add listeners if needed.
-        // TODO: Add listeners for other events as well.
         const fromBlock = await provider.getBlock()
         if (!tcrInstances[tcrAddr])
           tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-        if (
-          provider.listeners({
-            topics: [gtcrInterface.events.Dispute.topic],
-            address: tcrAddr
-          }).length === 0
-        ) {
-          tcrInstances[tcrAddr].on(
-            { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
-            disputeCallback({
-              tcrInstance: tcrInstances[tcrAddr],
-              gtcrView,
-              db,
-              networkID
-            })
-          )
-        }
-        if (
-          provider.listeners({
-            topics: [gtcrInterface.events.Evidence.topic],
-            address: tcrAddr
-          }).length === 0
-        ) {
-          tcrInstances[tcrAddr].on(
-            { ...tcrInstances[tcrAddr].filters.Evidence(), fromBlock },
-            evidenceCallback({
-              tcrInstance: tcrInstances[tcrAddr],
-              db,
-              networkID
-            })
-          )
-        }
+
+        Object.keys(tcrEventToCallback).map(eventName => {
+          if (
+            provider.listeners({
+              topics: [gtcrInterface.events[eventName].topic],
+              address: tcrAddr
+            }).length === 0
+          ) {
+            tcrInstances[tcrAddr].on(
+              { ...tcrInstances[tcrAddr].filters[eventName](), fromBlock },
+              tcrEventToCallback[eventName]({
+                tcrInstance: tcrInstances[tcrAddr],
+                gtcrView,
+                db,
+                networkID
+              })
+            )
+          }
+        })
 
         // Also watch for events from the arbitrator set to that request.
         const item = await gtcrView.getItem(tcrAddr, itemID)
@@ -103,7 +107,34 @@ const buildRouter = (db, gtcrView, provider, tcrInstances) => {
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
 
-        // TODO: Add arbitrator listeners if they are note there already.
+        // Add listeners for the arbitrator as well if they are not already there.
+        if (!arbitratorInstances[arbitratorAddr])
+          arbitratorInstances[arbitratorAddr] = new ethers.Contract(
+            arbitratorAddr,
+            _IArbitrator,
+            provider
+          )
+
+        Object.keys(arbitratorEventToCallback).map(eventName => {
+          if (
+            provider.listeners({
+              topics: [arbitratorInterface.events[eventName].topic],
+              address: arbitratorAddr
+            }).length === 0
+          ) {
+            arbitratorInstances[arbitratorAddr].on(
+              {
+                ...arbitratorInstances[arbitratorAddr].filters[eventName](),
+                fromBlock
+              },
+              arbitratorEventToCallback[eventName]({
+                tcrInstance: arbitratorInstances[arbitratorAddr],
+                db,
+                networkID
+              })
+            )
+          }
+        })
 
         res.send({
           message: `Now notifying ${subscriberAddr} of events related to ${itemID} of TCR at ${tcrAddr}`,

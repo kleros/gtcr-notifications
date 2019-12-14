@@ -1,6 +1,6 @@
 const ethers = require('ethers')
 const { TCRS } = require('../utils/db-keys')
-const uuidv4 = require('../utils/uuid')
+const addNotification = require('../utils/add-notification')
 const {
   NOTIFICATION_TYPES: { EVIDENCE_SUBMITTED }
 } = require('../utils/types')
@@ -20,28 +20,15 @@ module.exports = ({ tcrInstance, db, networkID }) => async (
   Object.keys(latestTcrObj[tcrAddr])
     .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
     .filter(subscriberAddr => subscriberAddr !== submitter)
-    .map(async subscriberAddr => {
-      let subscriberNotifications = {}
-      try {
-        subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-      } catch (err) {
-        if (!err.type === 'NotFoundError') throw new Error(err)
-      }
-      if (!subscriberNotifications[networkID])
-        subscriberNotifications[networkID] = {
-          unread: false,
-          notifications: []
-        }
-
-      subscriberNotifications[networkID].unread = true
-      subscriberNotifications[networkID].notifications.push({
-        type: EVIDENCE_SUBMITTED,
-        itemID,
-        tcrAddr,
-        clicked: false,
-        notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
-      })
-
-      await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-    })
+    .forEach(async subscriberAddr =>
+      addNotification(
+        {
+          type: EVIDENCE_SUBMITTED,
+          itemID,
+          tcrAddr
+        },
+        db,
+        subscriberAddr
+      )
+    )
 }

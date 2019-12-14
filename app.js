@@ -13,6 +13,12 @@ const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
 const {
   abi: _GTCRView
 } = require('@kleros/tcr/build/contracts/GeneralizedTCRView.json')
+const {
+  abi: _GTCR
+} = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
+const {
+  abi: _IArbitrator
+} = require('@kleros/tcr/build/contracts/IArbitrator.json')
 
 const gtcrView = new ethers.Contract(
   process.env.GTCR_VIEW_ADDRESS,
@@ -22,13 +28,19 @@ const gtcrView = new ethers.Contract(
 const db = level('./db')
 
 const tcrInstances = {}
+const arbitratorInstances = {}
 
 ;(async () => {
-  const {
-    abi: _GTCR
-  } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
   const disputeCallback = require('./events/dispute')
   const evidenceCallback = require('./events/evidence')
+  const requestExecutedCallback = require('./events/request-executed')
+  const tcrEventToCallback = {
+    Evidence: evidenceCallback,
+    Dispute: disputeCallback,
+    ItemStatusChange: requestExecutedCallback
+  }
+  const arbitratorEventToCallback = {}
+
   const {
     TCRS,
     INITIALIZED,
@@ -63,24 +75,41 @@ const tcrInstances = {}
   // each event.
   Object.keys(tcrs).forEach(tcrAddr => {
     tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-    tcrInstances[tcrAddr]
-      .on(
-        { ...tcrInstances[tcrAddr].filters.Dispute(), fromBlock },
-        disputeCallback({
+    Object.keys(tcrEventToCallback).forEach(eventName =>
+      tcrInstances[tcrAddr].on(
+        { ...tcrInstances[tcrAddr].filters[eventName](), fromBlock },
+        tcrEventToCallback[eventName]({
           tcrInstance: tcrInstances[tcrAddr],
           gtcrView,
           db,
           networkID
         })
       )
-      .on(
-        { ...tcrInstances[tcrAddr].filters.Evidence(), fromBlock },
-        evidenceCallback({
-          tcrInstance: tcrInstances[tcrAddr],
+    )
+  })
+
+  const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
+    ? JSON.parse(await db.get(TCRS))[networkID]
+    : {}
+  Object.keys(arbitrators).forEach(arbitratorAddr => {
+    arbitratorInstances[arbitratorAddr] = new ethers.Contract(
+      arbitratorAddr,
+      _IArbitrator,
+      provider
+    )
+    Object.keys(arbitratorEventToCallback).forEach(eventName =>
+      arbitratorInstances[arbitratorAddr].on(
+        {
+          ...arbitratorInstances[arbitratorAddr].filters[eventName](),
+          fromBlock
+        },
+        arbitratorEventToCallback[eventName]({
+          arbitratorInstance: arbitratorInstances[arbitratorAddr],
           db,
           networkID
         })
       )
+    )
   })
 })()
 
@@ -89,7 +118,13 @@ const logger = require('morgan')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const indexRouter = require('./routes')
-const apiRouter = require('./routes/api')(db, gtcrView, provider, tcrInstances)
+const apiRouter = require('./routes/api')(
+  db,
+  gtcrView,
+  provider,
+  tcrInstances,
+  arbitratorInstances
+)
 
 const app = express()
 app.use(cors())
