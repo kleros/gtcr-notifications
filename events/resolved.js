@@ -1,7 +1,7 @@
 const { TCRS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
 const {
-  NOTIFICATION_TYPES: { SUBMISSION_ACCEPTED, REMOVAL_ACCEPTED },
+  NOTIFICATION_TYPES: { SUBMISSION_ACCEPTED, REMOVAL_ACCEPTED, FINAL_RULING },
   ITEM_STATUS: { REGISTERED }
 } = require('../utils/types')
 
@@ -13,15 +13,15 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
   _resolved
 ) => {
   // Ignore status change events of unresolved requests.
-  if (!resolved) return
+  if (!_resolved) return
 
   const { address: tcrAddr } = tcrInstance
-  const { status } = await gtcrView.getItem(tcrAddr, itemID)
+  const { status } = await gtcrView.getItem(tcrAddr, _itemID)
 
   const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
 
   Object.keys(latestTcrObj[tcrAddr])
-    .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
+    .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][_itemID])
     .forEach(async subscriberAddr =>
       addNotification(
         {
@@ -30,13 +30,12 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
             : status === REGISTERED
             ? SUBMISSION_ACCEPTED
             : REMOVAL_ACCEPTED,
-          itemID,
-          tcrAddr,
-          clicked: false,
-          notificationID: uuidv4().slice(0, 6) // Slice because we don't need so much entropy.
+          itemID: _itemID,
+          tcrAddr
         },
         db,
-        subscriberAddr
+        subscriberAddr,
+        networkID
       )
     )
 }

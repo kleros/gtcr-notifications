@@ -2,7 +2,7 @@ const ethers = require('ethers')
 const { ARBITRATORS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
 const {
-  NOTIFICATION_TYPES: { APPEALABLE_RULING }
+  NOTIFICATION_TYPES: { APPEALED }
 } = require('../utils/types')
 
 module.exports = ({ arbitratorInstance, db, networkID }) => async (
@@ -15,7 +15,7 @@ module.exports = ({ arbitratorInstance, db, networkID }) => async (
   let itemID
   try {
     const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
-    itemID = tcrInstance.arbitratorDisputeIDToItem(arbitratorAddr, _disputeID)
+    itemID = await tcrInstance.arbitratorDisputeIDToItem(arbitratorAddr, _disputeID)
   } catch (err) {
     return
   }
@@ -36,7 +36,8 @@ module.exports = ({ arbitratorInstance, db, networkID }) => async (
           tcrAddr: _arbitrable
         },
         db,
-        subscriberAddr
+        subscriberAddr,
+        networkID
       )
     )
 }

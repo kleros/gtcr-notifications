@@ -12,9 +12,9 @@ const { TCRS, ARBITRATORS } = require('../utils/db-keys')
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
 const evidenceCallback = require('../events/evidence')
-const resolvedCallback = require('./events/resolved')
-const appealableRulingCallback = require('./events/appeal-possible')
-const appealCallback = require('./events/appeal-decision')
+const resolvedCallback = require('../events/resolved')
+const appealableRulingCallback = require('../events/appeal-possible')
+const appealCallback = require('../events/appeal-decision')
 
 const gtcrInterface = new ethers.utils.Interface(_GTCR)
 const arbitratorInterface = new ethers.utils.Interface(_IArbitrator)
@@ -101,6 +101,7 @@ const buildRouter = (
         let { arbitrator: arbitratorAddr } = item
 
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
+        console.info('arbitrator', arbitratorAddr)
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
         if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
         if (!arbitrators[networkID][arbitratorAddr])
@@ -109,6 +110,7 @@ const buildRouter = (
           arbitrators[networkID][arbitratorAddr][subscriberAddr] = {}
 
         arbitrators[networkID][arbitratorAddr][subscriberAddr][itemID] = true
+        console.info(arbitrators[networkID][arbitratorAddr])
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
 

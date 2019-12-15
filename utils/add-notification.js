@@ -1,4 +1,6 @@
-module.exports = async (notification, db, subscriberAddr) => {
+const uuidv4 = require('../utils/uuid')
+
+module.exports = async (notification, db, subscriberAddr, networkID) => {
   notification = {
     clicked: false,
     notificationID: uuidv4().slice(0, 6), // Slice because we don't need so much entropy.
