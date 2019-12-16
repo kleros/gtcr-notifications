@@ -66,7 +66,6 @@ const arbitratorInstances = {}
     } else throw new Error(err)
   }
   // Setup listeners for each TCR being watched.
-  provider.removeAllListeners()
   const [fromBlock, networkInfo] = await Promise.all([
     provider.getBlock(),
     provider.getNetwork()

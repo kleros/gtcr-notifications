@@ -58,10 +58,7 @@ const buildRouter = (
           if (!err.type === 'NotFoundError') throw new Error(err)
           await db.put(
             subscriberAddr,
-            JSON.stringify({
-              unread: false,
-              notifications: []
-            })
+            JSON.stringify({ notifications: [] })
           )
         }
 
@@ -162,10 +159,7 @@ const buildRouter = (
   router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
     let notifications = {
-      [networkID]: {
-        unread: false,
-        notifications: []
-      }
+      [networkID]: { notifications: [] }
     }
     try {
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
@@ -212,37 +206,6 @@ const buildRouter = (
         subscriberNotifications[networkID].notifications[
           notificationIndex
         ].clicked = true
-        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })
-      } catch (err) {
-        if (err.type === 'NotFoundError') res.send({ status: 200 })
-        else
-          res.send({
-            message: 'Internal error, please contact administrators',
-            error: err.message,
-            status: 'failed'
-          })
-      }
-    }
-  )
-
-  // Mark notifications as read.
-  router.put(
-    '/notifications/:subscriberAddr/:networkID',
-    cors(),
-    async (req, res) => {
-      try {
-        let { subscriberAddr, networkID } = req.params
-        // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
-
-        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        if (!subscriberNotifications[networkID]) {
-          res.send({ status: 200 })
-          return
-        }
-
-        subscriberNotifications[networkID].unread = false
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
@@ -312,10 +275,7 @@ const buildRouter = (
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
         const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        subscriberNotifications[networkID] = {
-          unread: false,
-          notifications: []
-        }
+        subscriberNotifications[networkID] = { notifications: [] }
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {

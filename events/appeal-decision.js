@@ -12,32 +12,34 @@ module.exports = ({ arbitratorInstance, db, networkID }) => async (
   const { address: arbitratorAddr } = arbitratorInstance
 
   // Detect if event is related to a GTCR. No op if it isn't.
-  let itemID
   try {
     const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
-    itemID = await tcrInstance.arbitratorDisputeIDToItem(arbitratorAddr, _disputeID)
+    const itemID = await tcrInstance.arbitratorDisputeIDToItem(
+      arbitratorAddr,
+      _disputeID
+    )
+
+    const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
+    Object.keys(arbitrators[arbitratorAddr])
+      .filter(
+        subscriberAddr => arbitrators[arbitratorAddr][subscriberAddr][itemID]
+      )
+      .filter(subscriberAddr => subscriberAddr !== submitter)
+      .forEach(async subscriberAddr =>
+        addNotification(
+          {
+            type: APPEALED,
+            itemID,
+            tcrAddr: ethers.utils.getAddress(_arbitrable)
+          },
+          db,
+          subscriberAddr,
+          networkID
+        )
+      )
   } catch (err) {
+    console.error('Error saving appeal notification', err)
     return
   }
 
-  if (!itemID) return
-
-  const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
-  Object.keys(arbitrators[arbitratorAddr])
-    .filter(
-      subscriberAddr => arbitrators[arbitratorAddr][subscriberAddr][itemID]
-    )
-    .filter(subscriberAddr => subscriberAddr !== submitter)
-    .forEach(async subscriberAddr =>
-      addNotification(
-        {
-          type: APPEALED,
-          itemID,
-          tcrAddr: _arbitrable
-        },
-        db,
-        subscriberAddr,
-        networkID
-      )
-    )
 }

@@ -15,29 +15,31 @@ module.exports = ({ arbitratorInstance, db, networkID }) => async (
   let itemID
   try {
     const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
-    itemID = await tcrInstance.arbitratorDisputeIDToItem(arbitratorAddr, _disputeID)
+    itemID = await tcrInstance.arbitratorDisputeIDToItem(
+      arbitratorAddr,
+      _disputeID
+    )
+
+    const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
+    Object.keys(arbitrators[arbitratorAddr])
+      .filter(
+        subscriberAddr => arbitrators[arbitratorAddr][subscriberAddr][itemID]
+      )
+      .filter(subscriberAddr => subscriberAddr !== submitter)
+      .forEach(async subscriberAddr =>
+        addNotification(
+          {
+            type: APPEALABLE_RULING,
+            itemID,
+            tcrAddr: ethers.utils.getAddress(_arbitrable)
+          },
+          db,
+          subscriberAddr,
+          networkID
+        )
+      )
   } catch (err) {
+    console.error('Error saving appeal possible notification', err)
     return
   }
-
-  if (!itemID) return
-
-  const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
-  Object.keys(arbitrators[arbitratorAddr])
-    .filter(
-      subscriberAddr => arbitrators[arbitratorAddr][subscriberAddr][itemID]
-    )
-    .filter(subscriberAddr => subscriberAddr !== submitter)
-    .forEach(async subscriberAddr =>
-      addNotification(
-        {
-          type: APPEALABLE_RULING,
-          itemID,
-          tcrAddr: _arbitrable
-        },
-        db,
-        subscriberAddr,
-        networkID
-      )
-    )
 }

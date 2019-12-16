@@ -13,12 +13,8 @@ module.exports = async (notification, db, subscriberAddr, networkID) => {
     if (!err.type === 'NotFoundError') throw new Error(err)
   }
   if (!subscriberNotifications[networkID])
-    subscriberNotifications[networkID] = {
-      unread: false,
-      notifications: []
-    }
+    subscriberNotifications[networkID] = { notifications: [] }
 
-  subscriberNotifications[networkID].unread = true
   subscriberNotifications[networkID].notifications.push(notification)
 
   await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
