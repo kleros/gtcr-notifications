@@ -1,5 +1,6 @@
 const express = require('express')
 const ethers = require('ethers')
+const cors = require('cors')
 const {
   abi: _GTCR
 } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
@@ -36,8 +37,10 @@ const buildRouter = (
   arbitratorInstances
 ) => {
   // Subscribe to request.
+  router.all('*', cors())
   router.post(
     '/subscribe',
+    cors(),
     validateSchema('subscription'),
     async (req, res) => {
       try {
@@ -101,7 +104,6 @@ const buildRouter = (
         let { arbitrator: arbitratorAddr } = item
 
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
-        console.info('arbitrator', arbitratorAddr)
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
         if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
         if (!arbitrators[networkID][arbitratorAddr])
@@ -110,7 +112,6 @@ const buildRouter = (
           arbitrators[networkID][arbitratorAddr][subscriberAddr] = {}
 
         arbitrators[networkID][arbitratorAddr][subscriberAddr][itemID] = true
-        console.info(arbitrators[networkID][arbitratorAddr])
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
 
@@ -183,8 +184,9 @@ const buildRouter = (
   })
 
   // Mark a notification with clicked.
-  router.patch(
+  router.put(
     '/notification/:subscriberAddr/:networkID/:notificationID',
+    cors(),
     async (req, res) => {
       try {
         let { subscriberAddr, networkID, notificationID } = req.params
@@ -210,7 +212,7 @@ const buildRouter = (
         subscriberNotifications[networkID].notifications[
           notificationIndex
         ].clicked = true
-        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
         if (err.type === 'NotFoundError') res.send({ status: 200 })
@@ -225,8 +227,9 @@ const buildRouter = (
   )
 
   // Mark notifications as read.
-  router.patch(
+  router.put(
     '/notifications/:subscriberAddr/:networkID',
+    cors(),
     async (req, res) => {
       try {
         let { subscriberAddr, networkID } = req.params
@@ -240,7 +243,7 @@ const buildRouter = (
         }
 
         subscriberNotifications[networkID].unread = false
-        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
         if (err.type === 'NotFoundError') res.send({ status: 200 })
@@ -257,6 +260,7 @@ const buildRouter = (
   // Delete a notification.
   router.delete(
     '/notification/:subscriberAddr/:networkID/:notificationID',
+    cors(),
     async (req, res) => {
       try {
         let { subscriberAddr, networkID, notificationID } = req.params
@@ -283,7 +287,7 @@ const buildRouter = (
           notificationIndex,
           1
         )
-        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
         if (err.type === 'NotFoundError') res.send({ status: 200 })
@@ -300,6 +304,7 @@ const buildRouter = (
   // Delete all notifications for a user and networkID.
   router.delete(
     '/notifications/:subscriberAddr/:networkID',
+    cors(),
     async (req, res) => {
       try {
         let { subscriberAddr, networkID } = req.params
@@ -311,7 +316,7 @@ const buildRouter = (
           unread: false,
           notifications: []
         }
-        db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
         if (err.type === 'NotFoundError') res.send({ status: 200 })
