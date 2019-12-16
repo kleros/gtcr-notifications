@@ -75,8 +75,8 @@ const arbitratorInstances = {}
     ? JSON.parse(await db.get(TCRS))[networkID]
     : {}
 
-  // Iterate through every user subscribed to events for this TCR and handle
-  // each event.
+  // Iterate through every user subscribed to events for each tcr and
+  // add event handlers for each one.
   Object.keys(tcrs).forEach(tcrAddr => {
     tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
     Object.keys(tcrEventToCallback).forEach(eventName =>
@@ -93,8 +93,11 @@ const arbitratorInstances = {}
   })
 
   const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
-    ? JSON.parse(await db.get(TCRS))[networkID]
+    ? JSON.parse(await db.get(ARBITRATORS))[networkID]
     : {}
+
+  // Iterate through every user subscribed to events for each arbitrator and
+  // add event handlers for each one.
   Object.keys(arbitrators).forEach(arbitratorAddr => {
     arbitratorInstances[arbitratorAddr] = new ethers.Contract(
       arbitratorAddr,
@@ -110,7 +113,8 @@ const arbitratorInstances = {}
         arbitratorEventToCallback[eventName]({
           arbitratorInstance: arbitratorInstances[arbitratorAddr],
           db,
-          networkID
+          networkID,
+          provider
         })
       )
     )

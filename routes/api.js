@@ -56,10 +56,7 @@ const buildRouter = (
           await db.get(subscriberAddr)
         } catch (err) {
           if (!err.type === 'NotFoundError') throw new Error(err)
-          await db.put(
-            subscriberAddr,
-            JSON.stringify({ notifications: [] })
-          )
+          await db.put(subscriberAddr, JSON.stringify({ notifications: [] }))
         }
 
         // Initialize TCR watch list for the item it hasn't been already.

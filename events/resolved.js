@@ -29,8 +29,8 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
             type: _disputed
               ? FINAL_RULING
               : status === REGISTERED
-                ? SUBMISSION_ACCEPTED
-                : REMOVAL_ACCEPTED,
+              ? SUBMISSION_ACCEPTED
+              : REMOVAL_ACCEPTED,
             itemID: _itemID,
             tcrAddr
           },
@@ -42,5 +42,4 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
   } catch (err) {
     console.error('Error saving resolved notification', err)
   }
-
 }

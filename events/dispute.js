@@ -10,7 +10,6 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
   arbitrator,
   disputeID
 ) => {
-  console.info('Dispute 1')
   // Find which users are subscribed to this item.
   try {
     const itemID = await tcrInstance.arbitratorDisputeIDToItem(
@@ -18,21 +17,17 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
       disputeID
     )
 
-    console.info('Dispute 2')
     const { address: tcrAddr } = tcrInstance
     const item = await gtcrView.getItem(tcrAddr, itemID)
     let { requester, challenger, status } = item
     requester = ethers.utils.getAddress(requester) // Convert to checksummed address.
     challenger = ethers.utils.getAddress(challenger) // Convert to checksummed address.
 
-    console.info('Dispute 3')
-
     const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
     Object.keys(latestTcrObj[tcrAddr])
       .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
       .filter(subscriberAddr => subscriberAddr !== challenger)
-      .forEach(async subscriberAddr => {
-        console.info('adding dispute notification')
+      .forEach(async subscriberAddr =>
         addNotification(
           {
             type:
@@ -46,7 +41,6 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
           subscriberAddr,
           networkID
         )
-      }
       )
   } catch (err) {
     console.error('Error saving dispute notification', err)

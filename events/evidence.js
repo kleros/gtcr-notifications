@@ -21,7 +21,8 @@ module.exports = ({ tcrInstance, db, networkID }) => async (
     Object.keys(latestTcrObj[tcrAddr])
       .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
       .filter(subscriberAddr => subscriberAddr !== submitter)
-      .forEach(async subscriberAddr => addNotification(
+      .forEach(async subscriberAddr =>
+        addNotification(
           {
             type: EVIDENCE_SUBMITTED,
             itemID,
@@ -30,10 +31,9 @@ module.exports = ({ tcrInstance, db, networkID }) => async (
           db,
           subscriberAddr,
           networkID
-        )      
+        )
       )
   } catch (err) {
     console.error('Error saving evidence notification', err)
   }
-
 }
