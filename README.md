@@ -21,7 +21,9 @@ Service and database for handling Generalized TCR contract events.
 
 1.  Clone this repo.
 2.  Duplicate `.env.example`, rename it to `.env` and fill in the environment variables.
-3.  Run `yarn` to install dependencies and then `yarn start` to start the service.
+3.  Run `yarn` to install dependencies and then `yarn start` to run the service in development mode.
+
+> To run the service in production mode use `node -r dotenv/config index.js`.
 
 ## Other Scripts
 
