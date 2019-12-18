@@ -15,8 +15,7 @@
     "gtcr"
   ],
   "scripts": {
-    "start": "node -r dotenv/config index.js",
-    "dev": "nodemon -r dotenv/config index.js",
+    "start": "nodemon -r dotenv/config index.js",
     "clean": "rimraf ./db/* && nodetouch ./db/.gitignore",
     "lint:eslint:fix": "eslint './*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
