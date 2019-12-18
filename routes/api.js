@@ -96,8 +96,8 @@ const buildRouter = (
         // Also watch for events from the arbitrator set to that request.
         const item = await gtcrView.getItem(tcrAddr, itemID)
         let { arbitrator: arbitratorAddr } = item
-
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
+
         const arbitrators = JSON.parse(await db.get(ARBITRATORS))
         if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
         if (!arbitrators[networkID][arbitratorAddr])
@@ -130,7 +130,7 @@ const buildRouter = (
                 fromBlock
               },
               arbitratorEventToCallback[eventName]({
-                tcrInstance: arbitratorInstances[arbitratorAddr],
+                arbitratorInstance: arbitratorInstances[arbitratorAddr],
                 db,
                 networkID
               })
@@ -139,7 +139,7 @@ const buildRouter = (
         })
 
         res.send({
-          message: `Now notifying ${subscriberAddr} of events related to ${itemID} of TCR at ${tcrAddr}`,
+          message: `Now notifying ${subscriberAddr} of events related to ${itemID} of TCR at ${tcrAddr} and arbitrator ${arbitratorAddr}`,
           status: 'success'
         })
       } catch (err) {
