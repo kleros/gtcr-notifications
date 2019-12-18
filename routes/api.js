@@ -132,7 +132,8 @@ const buildRouter = (
               arbitratorEventToCallback[eventName]({
                 arbitratorInstance: arbitratorInstances[arbitratorAddr],
                 db,
-                networkID
+                networkID,
+                provider
               })
             )
           }
