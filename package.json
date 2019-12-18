@@ -1,6 +1,6 @@
 {
   "name": "gtcr-notifications",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Microservice for monitoring gtcr contract events.",
   "main": "index.js",
   "author": "Kleros",

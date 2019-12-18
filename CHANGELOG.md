@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.2](https://github.com/kleros/gtcr-notifications/compare/v0.1.1...v0.1.2) (2019-12-18)
+
+
+### Bug Fixes
+
+* add missing provider ([c49c970](https://github.com/kleros/gtcr-notifications/commit/c49c970e84c17579d67cf0b935e23153f353740b))
+
 ### 0.1.1 (2019-12-18)
 
 
