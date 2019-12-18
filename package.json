@@ -1,6 +1,6 @@
 {
   "name": "gtcr-notifications",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Microservice for monitoring gtcr contract events.",
   "main": "index.js",
   "author": "Kleros",
@@ -19,7 +19,8 @@
     "clean": "rimraf ./db/* && nodetouch ./db/.gitignore",
     "lint:eslint:fix": "eslint './*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
-    "format": "yarn run lint:eslint:fix && yarn run lint:prettier:fix"
+    "format": "yarn run lint:eslint:fix && yarn run lint:prettier:fix",
+    "release": "standard-version"
   },
   "dependencies": {
     "@kleros/tcr": "^0.1.27",
