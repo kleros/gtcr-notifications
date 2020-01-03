@@ -10,6 +10,8 @@ const level = require('level')
 const ethers = require('ethers')
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
+provider.pollingInterval = 60 * 1000
+
 const {
   abi: _GTCRView
 } = require('@kleros/tcr/build/contracts/GeneralizedTCRView.json')
