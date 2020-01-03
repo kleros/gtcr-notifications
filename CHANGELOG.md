@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.3](https://github.com/kleros/gtcr-notifications/compare/v0.1.2...v0.1.3) (2020-01-03)
+
+
+### Bug Fixes
+
+* decrease polling interval to avoid rate limiting ([428140a](https://github.com/kleros/gtcr-notifications/commit/428140ae715885833eeea6ecefa980d812ca82cd))
+
 ### [0.1.2](https://github.com/kleros/gtcr-notifications/compare/v0.1.1...v0.1.2) (2019-12-18)
 
 
