@@ -10,6 +10,7 @@ const {
 
 const validateSchema = require('../schemas/validation')
 const { TCRS, ARBITRATORS } = require('../utils/db-keys')
+
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
 const evidenceCallback = require('../events/evidence')
@@ -36,7 +37,7 @@ const buildRouter = (
   tcrInstances,
   arbitratorInstances
 ) => {
-  // Subscribe to request.
+  // Subscribe for in-app notifications.
   router.all('*', cors())
   router.post(
     '/subscribe',
@@ -80,7 +81,7 @@ const buildRouter = (
               topics: [gtcrInterface.events[eventName].topic],
               address: tcrAddr
             }).length === 0
-          ) {
+          )
             tcrInstances[tcrAddr].on(
               { ...tcrInstances[tcrAddr].filters[eventName](), fromBlock },
               tcrEventToCallback[eventName]({
@@ -90,7 +91,6 @@ const buildRouter = (
                 networkID
               })
             )
-          }
         })
 
         // Also watch for events from the arbitrator set to that request.
@@ -123,7 +123,7 @@ const buildRouter = (
               topics: [arbitratorInterface.events[eventName].topic],
               address: arbitratorAddr
             }).length === 0
-          ) {
+          )
             arbitratorInstances[arbitratorAddr].on(
               {
                 ...arbitratorInstances[arbitratorAddr].filters[eventName](),
@@ -136,7 +136,6 @@ const buildRouter = (
                 provider
               })
             )
-          }
         })
 
         res.send({

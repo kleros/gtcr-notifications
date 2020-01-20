@@ -22,6 +22,7 @@ Service and database for handling Generalized TCR contract events.
 3.  Run `yarn` to install dependencies and then `yarn start` to run the service in development mode.
 
 > To run the service in production mode use `node -r dotenv/config index.js`.
+
 > To start with PM2 use `pm2 start --node-args="-r dotenv/config" index.js --name gtcr-notifications`
 
 ## Other Scripts
