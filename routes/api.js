@@ -222,15 +222,13 @@ const buildRouter = (
   // Get notifications for an account.
   router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
-    let notifications = {
-      [networkID]: { notifications: [] }
-    }
+    let notifications = { notifications: [] }
     try {
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
       notifications = JSON.parse(await db.get(subscriberAddr))[networkID]
       res.send(notifications)
     } catch (err) {
-      if (err.type === 'NotFoundError') res.send([])
+      if (err.type === 'NotFoundError') res.send(notifications)
       else
         res.send({
           message: 'Internal error, please contact administrators',
