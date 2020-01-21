@@ -48,34 +48,21 @@ const arbitratorInstances = {}
     AppealDecision: appealCallback
   }
 
-  const {
-    TCRS,
-    INITIALIZED,
-    SUBSCRIBERS,
-    ARBITRATORS
-  } = require('./utils/db-keys')
+  const { TCRS, ARBITRATORS } = require('./utils/db-keys')
 
-  // Initialize stores if needed.
-  try {
-    await db.get(INITIALIZED)
-  } catch (err) {
-    if (err.type === 'NotFoundError') {
-      console.info('Initializing DB')
-      await db.put(INITIALIZED, true)
-      await db.put(TCRS, JSON.stringify({}))
-      await db.put(ARBITRATORS, JSON.stringify({}))
-      await db.put(SUBSCRIBERS, JSON.stringify({}))
-    } else throw new Error(err)
-  }
   // Setup listeners for each TCR being watched.
   const [fromBlock, networkInfo] = await Promise.all([
     provider.getBlock(),
     provider.getNetwork()
   ])
   const { chainId: networkID } = networkInfo
-  const tcrs = JSON.parse(await db.get(TCRS))[networkID]
-    ? JSON.parse(await db.get(TCRS))[networkID]
-    : {}
+  let tcrs = {}
+  try {
+    tcrs = await db.get(TCRS)
+    tcrs = JSON.parse(tcrs)[networkID]
+  } catch (err) {
+    if (err.type !== 'NotFoundError') throw new Error(err)
+  }
 
   // Iterate through every user subscribed to events for each tcr and
   // add event handlers for each one.
@@ -94,9 +81,13 @@ const arbitratorInstances = {}
     )
   })
 
-  const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
-    ? JSON.parse(await db.get(ARBITRATORS))[networkID]
-    : {}
+  let arbitrators = {}
+  try {
+    arbitrators = await db.get(ARBITRATORS)
+    arbitrators = JSON.parse(arbitrators)[networkID]
+  } catch (err) {
+    if (err.type !== 'NotFoundError') throw new Error(err)
+  }
 
   // Iterate through every user subscribed to events for each arbitrator and
   // add event handlers for each one.

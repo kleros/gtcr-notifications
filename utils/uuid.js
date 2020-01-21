@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 // From here: https://gist.github.com/jed/982883
 function b(a) {
   return a

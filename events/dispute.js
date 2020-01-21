@@ -5,6 +5,7 @@ const {
   NOTIFICATION_TYPES: { REMOVAL_CHALLENGED, SUBMISSION_CHALLENGED },
   ITEM_STATUS: { REGISTRATION_REQUESTED }
 } = require('../utils/types')
+const { MESSAGES, SUBJECTS } = require('../utils/messages')
 
 module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
   arbitrator,
@@ -19,29 +20,38 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
 
     const { address: tcrAddr } = tcrInstance
     const item = await gtcrView.getItem(tcrAddr, itemID)
-    let { requester, challenger, status } = item
-    requester = ethers.utils.getAddress(requester) // Convert to checksummed address.
+    let { challenger, status } = item
     challenger = ethers.utils.getAddress(challenger) // Convert to checksummed address.
 
-    const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
+    let latestTcrObj = {}
+    try {
+      latestTcrObj = await db.get(TCRS)
+      latestTcrObj = JSON.parse(latestTcrObj)[networkID]
+    } catch (err) {
+      if (err.type !== 'NotFoundError') throw new Error(err)
+    }
+
     Object.keys(latestTcrObj[tcrAddr])
       .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
       .filter(subscriberAddr => subscriberAddr !== challenger)
-      .forEach(async subscriberAddr =>
+      .forEach(async subscriberAddr => {
+        const type =
+          status === REGISTRATION_REQUESTED
+            ? SUBMISSION_CHALLENGED
+            : REMOVAL_CHALLENGED
         addNotification(
           {
-            type:
-              status === REGISTRATION_REQUESTED
-                ? SUBMISSION_CHALLENGED
-                : REMOVAL_CHALLENGED,
+            type,
             itemID,
-            tcrAddr
+            tcrAddr,
+            subject: SUBJECTS[type],
+            message: MESSAGES[type]
           },
           db,
           subscriberAddr,
           networkID
         )
-      )
+      })
   } catch (err) {
     console.error('Error saving dispute notification', err)
   }

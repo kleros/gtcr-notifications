@@ -17,17 +17,19 @@
   "scripts": {
     "start": "nodemon -r dotenv/config index.js",
     "clean": "rimraf ./db/* && nodetouch ./db/.gitignore",
-    "lint:eslint:fix": "eslint './*.js' --fix",
+    "lint:eslint:fix": "eslint '**/*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
     "format": "yarn run lint:eslint:fix && yarn run lint:prettier:fix",
     "release": "standard-version"
   },
   "dependencies": {
     "@kleros/tcr": "^0.1.27",
+    "@sendgrid/mail": "^6.5.0",
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
+    "eth-sig-util": "^2.5.2",
     "ethers": "^4.0.40",
     "express": "^4.17.1",
     "json-schema": "^0.2.5",

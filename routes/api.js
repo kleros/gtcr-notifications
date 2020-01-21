@@ -1,6 +1,7 @@
 const express = require('express')
 const ethers = require('ethers')
 const cors = require('cors')
+const { recoverTypedSignature } = require('eth-sig-util')
 const {
   abi: _GTCR
 } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
@@ -9,7 +10,7 @@ const {
 } = require('@kleros/tcr/build/contracts/IArbitrator.json')
 
 const validateSchema = require('../schemas/validation')
-const { TCRS, ARBITRATORS } = require('../utils/db-keys')
+const { TCRS, ARBITRATORS, EMAIL_SETTINGS } = require('../utils/db-keys')
 
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
@@ -51,17 +52,14 @@ const buildRouter = (
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
         tcrAddr = ethers.utils.getAddress(tcrAddr)
 
-        // Check if user has notifications object initialized
-        // and if not, initialize it.
-        try {
-          await db.get(subscriberAddr)
-        } catch (err) {
-          if (!err.type === 'NotFoundError') throw new Error(err)
-          await db.put(subscriberAddr, JSON.stringify({ notifications: [] }))
-        }
-
         // Initialize TCR watch list for the item it hasn't been already.
-        const tcrs = JSON.parse(await db.get(TCRS))
+        let tcrs = {}
+        try {
+          tcrs = await db.get(TCRS)
+          tcrs = JSON.parse(tcrs)
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
         if (!tcrs[networkID]) tcrs[networkID] = {}
         if (!tcrs[networkID][tcrAddr]) tcrs[networkID][tcrAddr] = {}
         if (!tcrs[networkID][tcrAddr][subscriberAddr])
@@ -98,7 +96,14 @@ const buildRouter = (
         let { arbitrator: arbitratorAddr } = item
         arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
 
-        const arbitrators = JSON.parse(await db.get(ARBITRATORS))
+        let arbitrators = {}
+        try {
+          arbitrators = await db.get(ARBITRATORS)
+          arbitrators = JSON.parse(arbitrators)
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
+
         if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
         if (!arbitrators[networkID][arbitratorAddr])
           arbitrators[networkID][arbitratorAddr] = {}
@@ -152,6 +157,45 @@ const buildRouter = (
     }
   )
 
+  router.post(
+    '/email-settings',
+    cors(),
+    validateSchema('email-settings'),
+    async (req, res) => {
+      try {
+        const { data, signature } = req.body
+        const {
+          message: { email, nickname }
+        } = data
+
+        // Recover checksummed address.
+        const subscriberAddr = ethers.utils.getAddress(
+          recoverTypedSignature({ data, sig: signature })
+        )
+
+        let emailSettings = {}
+        try {
+          emailSettings = JSON.parse(await db.get(EMAIL_SETTINGS))
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
+        emailSettings[subscriberAddr] = { nickname, email }
+        await db.put(EMAIL_SETTINGS, JSON.stringify(emailSettings))
+
+        res.send({
+          message: `Saved email settings for ${nickname} of address ${subscriberAddr}.`,
+          status: 'success'
+        })
+      } catch (err) {
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
+      }
+    }
+  )
+
   // Get notifications for an account.
   router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
@@ -160,11 +204,10 @@ const buildRouter = (
     }
     try {
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
-      if (JSON.parse(await db.get(subscriberAddr))[networkID])
-        notifications = JSON.parse(await db.get(subscriberAddr))
-      res.send(notifications[networkID])
+      notifications = JSON.parse(await db.get(subscriberAddr))[networkID]
+      res.send(notifications)
     } catch (err) {
-      if (err.type === 'NotFoundError') res.send(notifications[networkID])
+      if (err.type === 'NotFoundError') res.send([])
       else
         res.send({
           message: 'Internal error, please contact administrators',
@@ -184,7 +227,13 @@ const buildRouter = (
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
-        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        let subscriberNotifications = {}
+        try {
+          subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
+
         if (!subscriberNotifications[networkID]) {
           res.send({ status: 404, message: 'Notification not found.' })
           return
@@ -206,13 +255,11 @@ const buildRouter = (
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
-        if (err.type === 'NotFoundError') res.send({ status: 200 })
-        else
-          res.send({
-            message: 'Internal error, please contact administrators',
-            error: err.message,
-            status: 'failed'
-          })
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
       }
     }
   )
@@ -227,7 +274,13 @@ const buildRouter = (
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
-        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        let subscriberNotifications = {}
+        try {
+          subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
+
         if (!subscriberNotifications[networkID]) {
           res.send({ status: 404, message: 'Notification not found.' })
           return
@@ -271,8 +324,17 @@ const buildRouter = (
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
-        const subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        subscriberNotifications[networkID] = { notifications: [] }
+        let subscriberNotifications = {}
+        try {
+          subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
+        } catch (err) {
+          if (err.type !== 'NotFoundError') throw new Error(err)
+        }
+
+        subscriberNotifications[networkID] = {
+          ...subscriberNotifications,
+          notifications: []
+        }
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {

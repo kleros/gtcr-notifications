@@ -8,6 +8,7 @@ const addNotification = require('../utils/add-notification')
 const {
   NOTIFICATION_TYPES: { APPEALABLE_RULING }
 } = require('../utils/types')
+const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
 module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
   _disputeID,
@@ -22,7 +23,14 @@ module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
       _disputeID
     )
 
-    const arbitrators = JSON.parse(await db.get(ARBITRATORS))[networkID]
+    let arbitrators = {}
+    try {
+      arbitrators = await db.get(ARBITRATORS)
+      arbitrators = JSON.parse(arbitrators)[networkID]
+    } catch (err) {
+      if (err.type !== 'NotFoundError') throw new Error(err)
+    }
+
     Object.keys(arbitrators[arbitratorAddr])
       .filter(
         subscriberAddr => arbitrators[arbitratorAddr][subscriberAddr][itemID]
@@ -32,7 +40,9 @@ module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
           {
             type: APPEALABLE_RULING,
             itemID,
-            tcrAddr: ethers.utils.getAddress(_arbitrable)
+            tcrAddr: ethers.utils.getAddress(_arbitrable),
+            subject: SUBJECTS[APPEALABLE_RULING],
+            message: MESSAGES[APPEALABLE_RULING]
           },
           db,
           subscriberAddr,
@@ -41,6 +51,5 @@ module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
       )
   } catch (err) {
     console.error('Error saving appeal possible notification', err)
-    return
   }
 }

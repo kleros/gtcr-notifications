@@ -4,6 +4,7 @@ const addNotification = require('../utils/add-notification')
 const {
   NOTIFICATION_TYPES: { EVIDENCE_SUBMITTED }
 } = require('../utils/types')
+const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
 module.exports = ({ tcrInstance, db, networkID }) => async (
   _arbitrator,
@@ -17,7 +18,14 @@ module.exports = ({ tcrInstance, db, networkID }) => async (
     const { address: tcrAddr } = tcrInstance
     submitter = ethers.utils.getAddress(submitter)
 
-    const latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
+    let latestTcrObj = {}
+    try {
+      latestTcrObj = await db.get(TCRS)
+      latestTcrObj = JSON.parse(latestTcrObj)[networkID]
+    } catch (err) {
+      if (err.type !== 'NotFoundError') throw new Error(err)
+    }
+
     Object.keys(latestTcrObj[tcrAddr])
       .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
       .filter(subscriberAddr => subscriberAddr !== submitter)
@@ -26,7 +34,9 @@ module.exports = ({ tcrInstance, db, networkID }) => async (
           {
             type: EVIDENCE_SUBMITTED,
             itemID,
-            tcrAddr
+            tcrAddr,
+            subject: SUBJECTS[EVIDENCE_SUBMITTED],
+            message: MESSAGES[EVIDENCE_SUBMITTED]
           },
           db,
           subscriberAddr,

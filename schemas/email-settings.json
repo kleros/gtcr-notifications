@@ -1,0 +1,95 @@
+{
+  "description": "A set email settings request",
+  "type": "object",
+  "required": [
+    "data",
+    "signature"
+  ],
+  "properties": {
+    "data": {
+      "type": "object",
+      "required": [
+        "types",
+        "primaryType",
+        "message",
+        "domain"
+      ],
+      "properties": {
+        "types": {
+          "type": "object",
+          "required": [
+            "EIP712Domain",
+            "Settings"
+          ],
+          "properties": {
+            "EIP712Domain": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "maxItems": 4,
+              "minItems": 4
+            },
+            "Settings": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "maxItems": 2,
+              "minItems": 2
+            }
+          }
+        },
+        "primaryType": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 8
+        },
+        "message": {
+          "type": "object",
+          "required": [
+            "email",
+            "nickname"
+          ],
+          "properties": {
+            "email": {
+              "type": "string",
+              "minLength": 5
+            },
+            "nickname": {
+              "type": "string"
+            }
+          }
+        },
+        "domain": {
+          "type": "object",
+          "required": [
+            "name",
+            "chainId",
+            "version",
+            "salt"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "chainId": {
+              "type": "number"
+            },
+            "version": {
+              "type": "number"
+            },
+            "salt": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 132,
+      "maxLength": 132
+    }
+  }
+}
