@@ -196,6 +196,29 @@ const buildRouter = (
     }
   )
 
+  // Get email settings for an account.
+  router.get('/email-settings/:subscriberAddr', async (req, res) => {
+    let { subscriberAddr } = req.params
+    let settings = {}
+    try {
+      subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
+      settings = JSON.parse(await db.get(EMAIL_SETTINGS))
+      res.send(settings[subscriberAddr])
+    } catch (err) {
+      if (err.type === 'NotFoundError')
+        res.send({
+          status: 404,
+          message: {}
+        })
+      else
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
+    }
+  })
+
   // Get notifications for an account.
   router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
     let { subscriberAddr, networkID } = req.params
