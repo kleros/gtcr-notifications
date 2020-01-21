@@ -39,15 +39,15 @@ module.exports = async (notification, db, subscriberAddr, networkID) => {
     const { tcrAddr, itemID, subject, message } = notification
     sgMail.send({
       to: email,
-      from: 'contact@kleros.io',
+      from: process.env.FROM_ADDRESS,
       templateId: process.env.TEMPLATE_ID,
       dynamic_template_data: {
         nickname,
         tcrAddr,
         itemID,
         subject,
-        message,
-        uiPath: process.env.UI_URL
+        message: message.replace('{{nickname}}', nickname),
+        uiPath: process.env.UI_PATH
       }
     })
   }
