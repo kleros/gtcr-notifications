@@ -39,7 +39,10 @@ module.exports = async (notification, db, subscriberAddr, networkID) => {
     const { tcrAddr, itemID, subject, message } = notification
     sgMail.send({
       to: email,
-      from: process.env.FROM_ADDRESS,
+      from: {
+        email: process.env.FROM_ADDRESS,
+        name: process.env.FROM_NAME
+      },
       templateId: process.env.TEMPLATE_ID,
       dynamic_template_data: {
         nickname,
