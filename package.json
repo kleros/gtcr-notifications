@@ -74,10 +74,5 @@
       "pre-commit": "yarn format",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
-  },
-  "babelMacros": {
-    "styledComponents": {
-      "pure": true
-    }
   }
 }
