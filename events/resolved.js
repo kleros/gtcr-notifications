@@ -6,7 +6,7 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
+module.exports = ({ tcrInstance, gtcrView, db }) => async (
   _itemID,
   _requestIndex,
   _roundIndex,
@@ -22,7 +22,7 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
 
     let latestTcrObj = {}
     try {
-      latestTcrObj = JSON.parse(await db.get(TCRS))[networkID]
+      latestTcrObj = JSON.parse(await db.get(TCRS))
     } catch (err) {
       if (err.type !== 'NotFoundError') throw new Error(err)
     }
@@ -44,8 +44,7 @@ module.exports = ({ tcrInstance, gtcrView, db, networkID }) => async (
             message: MESSAGES[type]
           },
           db,
-          subscriberAddr,
-          networkID
+          subscriberAddr
         )
       })
   } catch (err) {
