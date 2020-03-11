@@ -126,6 +126,9 @@ app.options('*', cors())
 app.use(logger('dev'))
 app.use(bodyParser.json())
 app.use('/', indexRouter)
-app.use('/api', apiRouter)
+app.use(
+  `${process.env.NETWORK_ID && `/${process.env.NETWORK_ID}`}/api`,
+  apiRouter
+)
 
 module.exports = app
