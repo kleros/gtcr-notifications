@@ -46,7 +46,7 @@ const buildRouter = (
     validateSchema('subscription'),
     async (req, res) => {
       try {
-        let { subscriberAddr, tcrAddr, itemID, networkID } = req.body
+        let { subscriberAddr, tcrAddr, itemID } = req.body
 
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
@@ -60,12 +60,10 @@ const buildRouter = (
         } catch (err) {
           if (err.type !== 'NotFoundError') throw new Error(err)
         }
-        if (!tcrs[networkID]) tcrs[networkID] = {}
-        if (!tcrs[networkID][tcrAddr]) tcrs[networkID][tcrAddr] = {}
-        if (!tcrs[networkID][tcrAddr][subscriberAddr])
-          tcrs[networkID][tcrAddr][subscriberAddr] = {}
+        if (!tcrs[tcrAddr]) tcrs[tcrAddr] = {}
+        if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
 
-        tcrs[networkID][tcrAddr][subscriberAddr][itemID] = true
+        tcrs[tcrAddr][subscriberAddr][itemID] = true
         await db.put(TCRS, JSON.stringify(tcrs))
 
         // Instantiate tcr and add listeners if needed.
@@ -85,8 +83,7 @@ const buildRouter = (
               tcrEventToCallback[eventName]({
                 tcrInstance: tcrInstances[tcrAddr],
                 gtcrView,
-                db,
-                networkID
+                db
               })
             )
         })
@@ -104,13 +101,12 @@ const buildRouter = (
           if (err.type !== 'NotFoundError') throw new Error(err)
         }
 
-        if (!arbitrators[[networkID]]) arbitrators[networkID] = {}
-        if (!arbitrators[networkID][arbitratorAddr])
-          arbitrators[networkID][arbitratorAddr] = {}
-        if (!arbitrators[networkID][arbitratorAddr][subscriberAddr])
-          arbitrators[networkID][arbitratorAddr][subscriberAddr] = {}
+        if (!arbitrators) arbitrators = {}
+        if (!arbitrators[arbitratorAddr]) arbitrators[arbitratorAddr] = {}
+        if (!arbitrators[arbitratorAddr][subscriberAddr])
+          arbitrators[arbitratorAddr][subscriberAddr] = {}
 
-        arbitrators[networkID][arbitratorAddr][subscriberAddr][itemID] = true
+        arbitrators[arbitratorAddr][subscriberAddr][itemID] = true
 
         await db.put(ARBITRATORS, JSON.stringify(arbitrators))
 
@@ -137,7 +133,6 @@ const buildRouter = (
               arbitratorEventToCallback[eventName]({
                 arbitratorInstance: arbitratorInstances[arbitratorAddr],
                 db,
-                networkID,
                 provider
               })
             )
@@ -197,12 +192,12 @@ const buildRouter = (
   )
 
   // Get notifications for an account.
-  router.get('/notifications/:subscriberAddr/:networkID', async (req, res) => {
-    let { subscriberAddr, networkID } = req.params
+  router.get('/notifications/:subscriberAddr', async (req, res) => {
+    let { subscriberAddr } = req.params
     let notifications = { notifications: [] }
     try {
       subscriberAddr = ethers.utils.getAddress(subscriberAddr) // Convert to checksummed address.
-      notifications = JSON.parse(await db.get(subscriberAddr))[networkID]
+      notifications = JSON.parse(await db.get(subscriberAddr))
       res.send(notifications)
     } catch (err) {
       if (err.type === 'NotFoundError') res.send(notifications)
@@ -217,11 +212,11 @@ const buildRouter = (
 
   // Mark a notification with clicked.
   router.put(
-    '/notification/:subscriberAddr/:networkID/:notificationID',
+    '/notification/:subscriberAddr/:notificationID',
     cors(),
     async (req, res) => {
       try {
-        let { subscriberAddr, networkID, notificationID } = req.params
+        let { subscriberAddr, notificationID } = req.params
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
@@ -232,14 +227,12 @@ const buildRouter = (
           if (err.type !== 'NotFoundError') throw new Error(err)
         }
 
-        if (!subscriberNotifications[networkID]) {
+        if (!subscriberNotifications) {
           res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        const notificationIndex = subscriberNotifications[
-          networkID
-        ].notifications.findIndex(
+        const notificationIndex = subscriberNotifications.notifications.findIndex(
           notification => notification.notificationID === notificationID
         )
         if (notificationIndex === -1) {
@@ -247,9 +240,7 @@ const buildRouter = (
           return
         }
 
-        subscriberNotifications[networkID].notifications[
-          notificationIndex
-        ].clicked = true
+        subscriberNotifications.notifications[notificationIndex].clicked = true
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
@@ -264,11 +255,11 @@ const buildRouter = (
 
   // Delete a notification.
   router.delete(
-    '/notification/:subscriberAddr/:networkID/:notificationID',
+    '/notification/:subscriberAddr/:notificationID',
     cors(),
     async (req, res) => {
       try {
-        let { subscriberAddr, networkID, notificationID } = req.params
+        let { subscriberAddr, notificationID } = req.params
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
 
@@ -279,14 +270,12 @@ const buildRouter = (
           if (err.type !== 'NotFoundError') throw new Error(err)
         }
 
-        if (!subscriberNotifications[networkID]) {
+        if (!subscriberNotifications) {
           res.send({ status: 404, message: 'Notification not found.' })
           return
         }
 
-        const notificationIndex = subscriberNotifications[
-          networkID
-        ].notifications.findIndex(
+        const notificationIndex = subscriberNotifications.notifications.findIndex(
           notification => notification.notificationID === notificationID
         )
         if (notificationIndex === -1) {
@@ -294,10 +283,7 @@ const buildRouter = (
           return
         }
 
-        subscriberNotifications[networkID].notifications.splice(
-          notificationIndex,
-          1
-        )
+        subscriberNotifications.notifications.splice(notificationIndex, 1)
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
@@ -312,40 +298,36 @@ const buildRouter = (
     }
   )
 
-  // Delete all notifications for a user and networkID.
-  router.delete(
-    '/notifications/:subscriberAddr/:networkID',
-    cors(),
-    async (req, res) => {
+  // Delete all notifications for a user.
+  router.delete('/notifications/:subscriberAddr', cors(), async (req, res) => {
+    try {
+      let { subscriberAddr } = req.params
+      // Convert to checksummed address
+      subscriberAddr = ethers.utils.getAddress(subscriberAddr)
+
+      let subscriberNotifications = {}
       try {
-        let { subscriberAddr, networkID } = req.params
-        // Convert to checksummed address
-        subscriberAddr = ethers.utils.getAddress(subscriberAddr)
-
-        let subscriberNotifications = {}
-        try {
-          subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
-        } catch (err) {
-          if (err.type !== 'NotFoundError') throw new Error(err)
-        }
-
-        subscriberNotifications[networkID] = {
-          ...subscriberNotifications,
-          notifications: []
-        }
-        await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
-        res.send({ status: 200 })
+        subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
       } catch (err) {
-        if (err.type === 'NotFoundError') res.send({ status: 200 })
-        else
-          res.send({
-            message: 'Internal error, please contact administrators',
-            error: err.message,
-            status: 'failed'
-          })
+        if (err.type !== 'NotFoundError') throw new Error(err)
       }
+
+      subscriberNotifications = {
+        ...subscriberNotifications,
+        notifications: []
+      }
+      await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
+      res.send({ status: 200 })
+    } catch (err) {
+      if (err.type === 'NotFoundError') res.send({ status: 200 })
+      else
+        res.send({
+          message: 'Internal error, please contact administrators',
+          error: err.message,
+          status: 'failed'
+        })
     }
-  )
+  })
 
   return router
 }

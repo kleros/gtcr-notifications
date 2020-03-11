@@ -51,15 +51,10 @@ const arbitratorInstances = {}
   const { TCRS, ARBITRATORS } = require('./utils/db-keys')
 
   // Setup listeners for each TCR being watched.
-  const [fromBlock, networkInfo] = await Promise.all([
-    provider.getBlock(),
-    provider.getNetwork()
-  ])
-  const { chainId: networkID } = networkInfo
+  const fromBlock = await provider.getBlock()
   let tcrs = {}
   try {
-    tcrs = await db.get(TCRS)
-    tcrs = JSON.parse(tcrs)[networkID]
+    tcrs = JSON.parse(await db.get(TCRS))
   } catch (err) {
     if (err.type !== 'NotFoundError') throw new Error(err)
   }
@@ -74,8 +69,7 @@ const arbitratorInstances = {}
         tcrEventToCallback[eventName]({
           tcrInstance: tcrInstances[tcrAddr],
           gtcrView,
-          db,
-          networkID
+          db
         })
       )
     )
@@ -84,7 +78,7 @@ const arbitratorInstances = {}
   let arbitrators = {}
   try {
     arbitrators = await db.get(ARBITRATORS)
-    arbitrators = JSON.parse(arbitrators)[networkID]
+    arbitrators = JSON.parse(arbitrators)
   } catch (err) {
     if (err.type !== 'NotFoundError') throw new Error(err)
   }
@@ -106,7 +100,6 @@ const arbitratorInstances = {}
         arbitratorEventToCallback[eventName]({
           arbitratorInstance: arbitratorInstances[arbitratorAddr],
           db,
-          networkID,
           provider
         })
       )

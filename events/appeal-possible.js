@@ -10,7 +10,7 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
+module.exports = ({ arbitratorInstance, db, provider }) => async (
   _disputeID,
   _arbitrable
 ) => {
@@ -26,7 +26,7 @@ module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
     let arbitrators = {}
     try {
       arbitrators = await db.get(ARBITRATORS)
-      arbitrators = JSON.parse(arbitrators)[networkID]
+      arbitrators = JSON.parse(arbitrators)
     } catch (err) {
       if (err.type !== 'NotFoundError') throw new Error(err)
     }
@@ -45,8 +45,7 @@ module.exports = ({ arbitratorInstance, db, networkID, provider }) => async (
             message: MESSAGES[APPEALABLE_RULING]
           },
           db,
-          subscriberAddr,
-          networkID
+          subscriberAddr
         )
       )
   } catch (err) {
