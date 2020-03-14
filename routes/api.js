@@ -143,6 +143,7 @@ const buildRouter = (
           status: 'success'
         })
       } catch (err) {
+        console.error(err)
         res.send({
           message: 'Internal error, please contact administrators',
           error: err.message,
@@ -182,6 +183,7 @@ const buildRouter = (
           status: 'success'
         })
       } catch (err) {
+        console.error(err)
         res.send({
           message: 'Internal error, please contact administrators',
           error: err.message,
@@ -201,12 +203,14 @@ const buildRouter = (
       res.send(notifications)
     } catch (err) {
       if (err.type === 'NotFoundError') res.send(notifications)
-      else
+      else {
+        console.error(err)
         res.send({
           message: 'Internal error, please contact administrators',
           error: err.message,
           status: 'failed'
         })
+      }
     }
   })
 
@@ -244,6 +248,7 @@ const buildRouter = (
         await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
         res.send({ status: 200 })
       } catch (err) {
+        console.error(err)
         res.send({
           message: 'Internal error, please contact administrators',
           error: err.message,
@@ -288,12 +293,14 @@ const buildRouter = (
         res.send({ status: 200 })
       } catch (err) {
         if (err.type === 'NotFoundError') res.send({ status: 200 })
-        else
+        else {
+          console.error(err)
           res.send({
             message: 'Internal error, please contact administrators',
             error: err.message,
             status: 'failed'
           })
+        }
       }
     }
   )

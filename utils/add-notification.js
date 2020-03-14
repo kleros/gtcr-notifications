@@ -13,13 +13,12 @@ module.exports = async (notification, db, subscriberAddr) => {
     notificationID: uuidv4().slice(0, 6), // Slice because we don't need so much entropy.
     ...notification
   }
-  let subscriberNotifications = {}
+  let subscriberNotifications = { notifications: [] }
   try {
     subscriberNotifications = JSON.parse(await db.get(subscriberAddr))
   } catch (err) {
     if (!err.type === 'NotFoundError') throw new Error(err)
   }
-  if (!subscriberNotifications) subscriberNotifications = { notifications: [] }
 
   subscriberNotifications.notifications.push(notification)
 
