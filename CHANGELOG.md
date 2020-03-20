@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.4](https://github.com/kleros/gtcr-notifications/compare/v0.1.3...v0.1.4) (2020-03-20)
+
+
+### Features
+
+* add email notification support and close [#1](https://github.com/kleros/gtcr-notifications/issues/1) ([37a9e84](https://github.com/kleros/gtcr-notifications/commit/37a9e84009ee107d5a1446a3f2d77f3b2e21c3c3))
+* add endpoint for fetching settings ([7892b5d](https://github.com/kleros/gtcr-notifications/commit/7892b5de81ce267b10eac42c1bdf7514d6ddab1a))
+* don't expose user's settings ([9e92de7](https://github.com/kleros/gtcr-notifications/commit/9e92de7514a45acb411fb1a8cfe0b61b8dbcc46b))
+* include user's nickname in email ([9c4d5cf](https://github.com/kleros/gtcr-notifications/commit/9c4d5cfcb7b1a7a1e596e1c35311831883ce81c4))
+
+
+### Bug Fixes
+
+* allow setting the networkID via environment variable ([2c64f51](https://github.com/kleros/gtcr-notifications/commit/2c64f51ff684bbad13ae65e9e61df7e5863de5be))
+* clean db script ([6ccbea2](https://github.com/kleros/gtcr-notifications/commit/6ccbea22a3a2ecec8c2588ad0ce65bb89702f398))
+* don't handle multiple networks the app level ([7afe4bd](https://github.com/kleros/gtcr-notifications/commit/7afe4bd5c26df5e8e2dfdd8bb4cc3fba228a5be5))
+* email notifications messages ([e5e933f](https://github.com/kleros/gtcr-notifications/commit/e5e933fb94fda579d488c0413a90c978eabfe0b0))
+* include name in from field ([71cf870](https://github.com/kleros/gtcr-notifications/commit/71cf8704136b8e6e0b4e054a9a169ef2c8048ccc))
+* notification response for not found ([4ba2f82](https://github.com/kleros/gtcr-notifications/commit/4ba2f8284c3abf802fae4bd6576c8d14402a9904))
+* remove network-specific code ([e06b25f](https://github.com/kleros/gtcr-notifications/commit/e06b25f07d05f98704637962160b10aa2a9cb14f))
+* subscriber notifications object initialization ([08144ee](https://github.com/kleros/gtcr-notifications/commit/08144ee354d70a9f3a4e82200c03e13feb85cab8))
+
 ### [0.1.3](https://github.com/kleros/gtcr-notifications/compare/v0.1.2...v0.1.3) (2020-01-03)
 
 
