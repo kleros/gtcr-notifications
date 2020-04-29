@@ -19,6 +19,7 @@
     "clean": "rimraf ./db/* && nodetouch ./db/.gitkeep",
     "lint:eslint:fix": "eslint '**/*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
+    "lint:secretlint": "secretlint '**/*'",
     "format": "yarn run lint:eslint:fix && yarn run lint:prettier:fix",
     "release": "standard-version"
   },
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^2.0.0",
     "eslint": "^6.7.2",
     "eslint-config-prettier": "^6.0.0",
     "eslint-config-standard": "^13.0.1",
@@ -52,6 +54,7 @@
     "nodemon": "^2.0.1",
     "prettier": "^1.19.1",
     "rimraf": "^3.0.0",
+    "secretlint": "^2.0.0",
     "standard-version": "^7.0.1",
     "touch": "^3.1.0"
   },
@@ -71,7 +74,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn format",
+      "pre-commit": "yarn format && yarn lint:secretlint",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
   }
