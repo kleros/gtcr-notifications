@@ -69,7 +69,8 @@ const arbitratorInstances = {}
         tcrEventToCallback[eventName]({
           tcrInstance: tcrInstances[tcrAddr],
           gtcrView,
-          db
+          db,
+          provider
         })
       )
     )

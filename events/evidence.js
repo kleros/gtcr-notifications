@@ -6,15 +6,23 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, db }) => async (
-  _arbitrator,
+module.exports = ({ tcrInstance, db, provider }) => async (
+  _,
   evidenceGroupID,
   submitter
 ) => {
   try {
-    const { itemID } = await tcrInstance.evidenceGroupIDToRequestID(
-      evidenceGroupID
-    )
+    const { _itemID: itemID } = (
+      await provider.getLogs({
+        ...tcrInstance.filters.RequestEvidenceGroupID(
+          null,
+          null,
+          evidenceGroupID
+        ),
+        fromBlock: 0
+      })
+    ).map(log => tcrInstance.interface.parseLog(log))[0].values
+
     const { address: tcrAddr } = tcrInstance
     submitter = ethers.utils.getAddress(submitter)
 

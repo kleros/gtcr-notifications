@@ -7,10 +7,10 @@ const {
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
 module.exports = ({ tcrInstance, gtcrView, db }) => async (
-  _itemID,
+  itemID,
   _requestIndex,
   _roundIndex,
-  _disputed,
+  disputed,
   _resolved
 ) => {
   try {
@@ -18,7 +18,7 @@ module.exports = ({ tcrInstance, gtcrView, db }) => async (
     if (!_resolved) return
 
     const { address: tcrAddr } = tcrInstance
-    const { status } = await gtcrView.getItem(tcrAddr, _itemID)
+    const { status } = await gtcrView.getItem(tcrAddr, itemID)
 
     let latestTcrObj = {}
     try {
@@ -28,9 +28,9 @@ module.exports = ({ tcrInstance, gtcrView, db }) => async (
     }
 
     Object.keys(latestTcrObj[tcrAddr])
-      .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][_itemID])
+      .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
       .forEach(async subscriberAddr => {
-        const type = _disputed
+        const type = disputed
           ? FINAL_RULING
           : status === REGISTERED
           ? SUBMISSION_ACCEPTED
@@ -38,7 +38,7 @@ module.exports = ({ tcrInstance, gtcrView, db }) => async (
         addNotification(
           {
             type,
-            itemID: _itemID,
+            itemID: itemID,
             tcrAddr,
             subject: SUBJECTS[type],
             message: MESSAGES[type]
