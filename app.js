@@ -38,10 +38,13 @@ const arbitratorInstances = {}
   const resolvedCallback = require('./events/resolved')
   const appealableRulingCallback = require('./events/appeal-possible')
   const appealCallback = require('./events/appeal-decision')
+  const paidFeesCallback = require('./events/paid-fees')
+
   const tcrEventToCallback = {
     Evidence: evidenceCallback,
     Dispute: disputeCallback,
-    ItemStatusChange: resolvedCallback
+    ItemStatusChange: resolvedCallback,
+    HasPaidAppealFee: paidFeesCallback
   }
   const arbitratorEventToCallback = {
     AppealPossible: appealableRulingCallback,

@@ -9,7 +9,8 @@ const {
     EVIDENCE_SUBMITTED,
     APPEALED,
     APPEALABLE_RULING,
-    FINAL_RULING
+    FINAL_RULING,
+    HAS_PAID_FEES
   }
 } = require('./types')
 
@@ -24,7 +25,8 @@ module.exports = {
     [EVIDENCE_SUBMITTED]: 'Evidence submitted.',
     [APPEALED]: 'Ruling appealed.',
     [APPEALABLE_RULING]: 'Appealable ruling given.',
-    [FINAL_RULING]: 'Ruling enforced.'
+    [FINAL_RULING]: 'Ruling enforced.',
+    [HAS_PAID_FEES]: 'Party Fully Funded'
   },
   MESSAGES: {
     [SUBMISSION_PENDING]:
