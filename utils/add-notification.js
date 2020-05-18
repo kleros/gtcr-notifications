@@ -21,6 +21,7 @@ module.exports = async (notification, db, subscriberAddr) => {
   }
 
   subscriberNotifications.notifications.push(notification)
+  console.info(notification.message)
 
   await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
 
