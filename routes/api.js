@@ -1,7 +1,8 @@
 const express = require('express')
 const ethers = require('ethers')
 const cors = require('cors')
-const { recoverTypedSignature } = require('eth-sig-util')
+const { bufferToHex } = require('ethereumjs-util')
+const { recoverPersonalSignature } = require('eth-sig-util')
 const {
   abi: _GTCR
 } = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
@@ -165,8 +166,9 @@ const buildRouter = (
         } = data
 
         // Recover checksummed address.
+        const hexMsg = bufferToHex(Buffer.from(JSON.stringify(data), 'utf8'))
         const subscriberAddr = ethers.utils.getAddress(
-          recoverTypedSignature({ data, sig: signature })
+          recoverPersonalSignature({ data: hexMsg, sig: signature })
         )
 
         let emailSettings = {}
