@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/kleros/gtcr-notifications/compare/v0.1.4...v1.0.0) (2020-05-27)
+
+
+### Features
+
+* notify when one side is fully funded and close [#6](https://github.com/kleros/gtcr-notifications/issues/6) ([7ec0faf](https://github.com/kleros/gtcr-notifications/commit/7ec0faf476e429f835cc2f0fae23d9d4979c099a))
+* upgrade to latest contract and close [#8](https://github.com/kleros/gtcr-notifications/issues/8), [#7](https://github.com/kleros/gtcr-notifications/issues/7) ([2190ac8](https://github.com/kleros/gtcr-notifications/commit/2190ac8e61274a1e2de6d515e823324c89fc5b38))
+
+
+### Bug Fixes
+
+* add secretlint and format messages ([d263325](https://github.com/kleros/gtcr-notifications/commit/d263325ccbd9aa4f5c4c502abc559b2e60dd7788))
+* typo in email notification messages ([4333f8e](https://github.com/kleros/gtcr-notifications/commit/4333f8e3284a0911a78a5e38c49f2476bd9660b6))
+* use legacy sign and close kleros/gtcr[#32](https://github.com/kleros/gtcr-notifications/issues/32) ([f0881f3](https://github.com/kleros/gtcr-notifications/commit/f0881f3550f81b2026546016232287d427c8ba98))
+* verbosity and contract version ([b18d9d2](https://github.com/kleros/gtcr-notifications/commit/b18d9d2ce4c43748b87a6797c625f1849b35b495))
+
 ### [0.1.4](https://github.com/kleros/gtcr-notifications/compare/v0.1.3...v0.1.4) (2020-03-20)
 
 
