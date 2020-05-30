@@ -10,11 +10,15 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ arbitratorInstance, db, provider }) => async (
+module.exports = ({ arbitratorInstance, db }) => async (
   _disputeID,
   _arbitrable
 ) => {
   try {
+    const provider = new ethers.providers.JsonRpcProvider(
+      process.env.PROVIDER_URL
+    )
+
     // Detect if event is related to a GTCR. No op if it isn't.
     const { address: arbitratorAddr } = arbitratorInstance
     const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)

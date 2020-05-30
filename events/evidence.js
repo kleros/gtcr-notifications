@@ -6,11 +6,14 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, db, provider }) => async (
+module.exports = ({ tcrInstance, db }) => async (
   _,
   evidenceGroupID,
   submitter
 ) => {
+  const provider = new ethers.providers.JsonRpcProvider(
+    process.env.PROVIDER_URL
+  )
   try {
     const { _itemID: itemID } = (
       await provider.getLogs({
