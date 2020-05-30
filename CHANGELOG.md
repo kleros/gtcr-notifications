@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/kleros/gtcr-notifications/compare/v1.0.0...v1.1.0) (2020-05-30)
+
+
+### Features
+
+* don't use nickname ([28253a0](https://github.com/kleros/gtcr-notifications/commit/28253a055205b2e451329c299a3a981984a10546))
+
+
+### Bug Fixes
+
+* missing provider on event handlers ([4b09355](https://github.com/kleros/gtcr-notifications/commit/4b09355b6fafb99f0d9e40a789e1d6380bad7f36))
+
 ## [1.0.0](https://github.com/kleros/gtcr-notifications/compare/v0.1.4...v1.0.0) (2020-05-27)
 
 
