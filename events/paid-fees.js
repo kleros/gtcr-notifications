@@ -32,7 +32,7 @@ module.exports = ({ tcrInstance, db }) => async (
             itemID,
             tcrAddr,
             subject: SUBJECTS[HAS_PAID_FEES],
-            message: `{{nickname}}, the ${
+            message: `The ${
               side === PARTY.REQUESTER ? 'submitter' : 'challenger'
             } is fully funded. The ${
               side === PARTY.REQUESTER ? 'challenger' : 'submitter'

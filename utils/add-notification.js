@@ -34,7 +34,7 @@ module.exports = async (notification, db, subscriberAddr) => {
   }
 
   if (emailSettings[subscriberAddr]) {
-    const { email, nickname } = emailSettings[subscriberAddr]
+    const { email } = emailSettings[subscriberAddr]
     const { tcrAddr, itemID, subject, message } = notification
     sgMail.send({
       to: email,
@@ -44,11 +44,10 @@ module.exports = async (notification, db, subscriberAddr) => {
       },
       templateId: process.env.TEMPLATE_ID,
       dynamic_template_data: {
-        nickname,
         tcrAddr,
         itemID,
         subject,
-        message: message.replace('{{nickname}}', nickname),
+        message,
         uiPath: process.env.UI_PATH
       }
     })

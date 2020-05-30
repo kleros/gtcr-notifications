@@ -162,7 +162,7 @@ const buildRouter = (
       try {
         const { data, signature } = req.body
         const {
-          message: { email, nickname }
+          message: { email }
         } = data
 
         // Recover checksummed address.
@@ -177,11 +177,11 @@ const buildRouter = (
         } catch (err) {
           if (err.type !== 'NotFoundError') throw new Error(err)
         }
-        emailSettings[subscriberAddr] = { nickname, email }
+        emailSettings[subscriberAddr] = { email }
         await db.put(EMAIL_SETTINGS, JSON.stringify(emailSettings))
 
         res.send({
-          message: `Saved email settings for ${nickname} of address ${subscriberAddr}.`,
+          message: 'Settings saved successfully.',
           status: 'success'
         })
       } catch (err) {

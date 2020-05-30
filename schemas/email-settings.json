@@ -48,16 +48,12 @@
         "message": {
           "type": "object",
           "required": [
-            "email",
-            "nickname"
+            "email"
           ],
           "properties": {
             "email": {
               "type": "string",
               "minLength": 5
-            },
-            "nickname": {
-              "type": "string"
             }
           }
         },
