@@ -54,7 +54,13 @@ const arbitratorInstances = {}
   const { TCRS, ARBITRATORS } = require('./utils/db-keys')
 
   // Setup listeners for each TCR being watched.
-  const fromBlock = await provider.getBlock()
+  let fromBlock
+  try {
+    fromBlock = await provider.getBlock()
+  } catch (err) {
+    console.error('Error fetching block.')
+    throw err
+  }
   let tcrs = {}
   try {
     tcrs = JSON.parse(await db.get(TCRS))
