@@ -56,13 +56,11 @@ typings/
 
 # dotenv environment constiables file
 .env
-
-# next.js build output
-.next
+.env.*
+!.env.example
 
 # application key value store
-db/*
-!db/.gitkeep
+db-*
 
 # encryption keys
 key/*.pem

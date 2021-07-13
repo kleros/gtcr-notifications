@@ -15,7 +15,10 @@
     "gtcr"
   ],
   "scripts": {
-    "start": "nodemon -r dotenv/config index.js",
+    "start": "env-cmd -f ./.env nodemon -r dotenv-safe/config index.js",
+    "start:mainnet": "env-cmd -f ./.env.mainnet node -r dotenv-safe/config index.js",
+    "start:kovan": "env-cmd -f ./.env.kovan node -r dotenv-safe/config index.js",
+    "start:xdai": "env-cmd -f ./.env.xdai node -r dotenv-safe/config index.js",
     "clean": "rimraf ./db/* && nodetouch ./db/.gitkeep",
     "lint:eslint:fix": "eslint '**/*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
@@ -29,7 +32,8 @@
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
+    "dotenv-safe": "^8.2.0",
+    "env-cmd": "^10.1.0",
     "eth-sig-util": "^2.5.2",
     "ethereumjs-util": "^7.0.2",
     "ethers": "^4.0.40",
@@ -78,5 +82,9 @@
       "pre-commit": "yarn format && yarn lint:secretlint",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "volta": {
+    "node": "14.17.3",
+    "yarn": "1.22.10"
   }
 }

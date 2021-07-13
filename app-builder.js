@@ -1,17 +1,19 @@
-if (!process.env.PROVIDER_URL)
-  throw new Error(
-    'No web3 provider set. Please set the PROVIDER_URL environment variable'
-  )
-
-if (!process.env.GTCR_VIEW_ADDRESS)
-  throw new Error('Missing GTCR View contract address set.')
-
 const level = require('level')
 const ethers = require('ethers')
+const express = require('express')
+const logger = require('morgan')
+const bodyParser = require('body-parser')
+const cors = require('cors')
+const fs = require('fs')
 
-const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
-provider.pollingInterval = 60 * 1000
-
+const indexRouter = require('./routes')
+const apiRouterBuilder = require('./routes/api')
+const disputeCallback = require('./events/dispute')
+const evidenceCallback = require('./events/evidence')
+const resolvedCallback = require('./events/resolved')
+const appealableRulingCallback = require('./events/appeal-possible')
+const appealCallback = require('./events/appeal-decision')
+const paidFeesCallback = require('./events/paid-fees')
 const {
   abi: _GTCRView
 } = require('@kleros/tcr/build/contracts/GeneralizedTCRView.json')
@@ -22,23 +24,26 @@ const {
   abi: _IArbitrator
 } = require('@kleros/tcr/build/contracts/IArbitrator.json')
 
-const gtcrView = new ethers.Contract(
-  process.env.GTCR_VIEW_ADDRESS,
-  _GTCRView,
-  provider
-)
-const db = level('./db')
+module.exports = async function buildApp() {
+  const provider = new ethers.providers.JsonRpcProvider(
+    process.env.PROVIDER_URL
+  )
+  provider.pollingInterval = 60 * 1000
 
-const tcrInstances = {}
-const arbitratorInstances = {}
+  const gtcrView = new ethers.Contract(
+    process.env.GTCR_VIEW_ADDRESS,
+    _GTCRView,
+    provider
+  )
 
-;(async () => {
-  const disputeCallback = require('./events/dispute')
-  const evidenceCallback = require('./events/evidence')
-  const resolvedCallback = require('./events/resolved')
-  const appealableRulingCallback = require('./events/appeal-possible')
-  const appealCallback = require('./events/appeal-decision')
-  const paidFeesCallback = require('./events/paid-fees')
+  const { chainId } = await provider.getNetwork()
+
+  const DB_KEY = `./db-${chainId}`
+  if (!fs.existsSync(DB_KEY)) fs.mkdirSync(DB_KEY)
+
+  const db = level(DB_KEY)
+  const tcrInstances = {}
+  const arbitratorInstances = {}
 
   const tcrEventToCallback = {
     Evidence: evidenceCallback,
@@ -115,30 +120,17 @@ const arbitratorInstances = {}
       )
     )
   })
-})()
 
-const express = require('express')
-const logger = require('morgan')
-const bodyParser = require('body-parser')
-const cors = require('cors')
-const indexRouter = require('./routes')
-const apiRouter = require('./routes/api')(
-  db,
-  gtcrView,
-  provider,
-  tcrInstances,
-  arbitratorInstances
-)
+  const app = express()
+  app.use('*', cors())
+  app.options('*', cors())
+  app.use(logger('dev'))
+  app.use(bodyParser.json())
+  app.use('/', indexRouter)
+  app.use(
+    `${process.env.NETWORK_ID && `/${process.env.NETWORK_ID}`}/api`,
+    apiRouterBuilder(db, gtcrView, provider, tcrInstances, arbitratorInstances)
+  )
 
-const app = express()
-app.use('*', cors())
-app.options('*', cors())
-app.use(logger('dev'))
-app.use(bodyParser.json())
-app.use('/', indexRouter)
-app.use(
-  `${process.env.NETWORK_ID && `/${process.env.NETWORK_ID}`}/api`,
-  apiRouter
-)
-
-module.exports = app
+  return app
+}
