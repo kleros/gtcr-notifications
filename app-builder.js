@@ -6,7 +6,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const fs = require('fs')
 
-const indexRouter = require('./routes')
+const indexRouterBuilder = require('./routes')
 const apiRouterBuilder = require('./routes/api')
 const disputeCallback = require('./events/dispute')
 const evidenceCallback = require('./events/evidence')
@@ -126,7 +126,7 @@ module.exports = async function buildApp() {
   app.options('*', cors())
   app.use(logger('dev'))
   app.use(bodyParser.json())
-  app.use('/', indexRouter)
+  app.use('/', indexRouterBuilder(provider))
   app.use(
     `${process.env.NETWORK_ID && `/${process.env.NETWORK_ID}`}/api`,
     apiRouterBuilder(db, gtcrView, provider, tcrInstances, arbitratorInstances)
