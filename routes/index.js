@@ -1,10 +1,17 @@
 const express = require('express')
 
-const router = express.Router()
+module.exports = provider => {
+  const router = express.Router()
 
-/* GET home page. */
-router.get('/', function(_, res) {
-  res.send('<h1>GTCR Notifications</h1> <p>All systems go.</p>')
-})
+  /* GET home page. */
+  router.get('/', function(_, res) {
+    const network = provider.getNetwork()
+    res.send(
+      `<h1>Curate Notifications</h1> <p>All systems go.</p> <p>${JSON.stringify(
+        network
+      )}</p>`
+    )
+  })
 
-module.exports = router
+  return router
+}
