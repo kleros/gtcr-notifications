@@ -13,7 +13,8 @@ Service and database for handling Generalized TCR contract events.
 
 ## Prerequisites
 
-- NodeJS version 10
+- Volta.sh - Recommended
+- NodeJS version 14
 
 ## Get Started
 
@@ -21,9 +22,14 @@ Service and database for handling Generalized TCR contract events.
 2.  Duplicate `.env.example`, rename it to `.env` and fill in the environment variables.
 3.  Run `yarn` to install dependencies and then `yarn start` to run the service in development mode.
 
-> To run the service in production mode use `node -r dotenv/config index.js`.
+### Production
 
-> To start with PM2 use `pm2 start --node-args="-r dotenv/config" index.js --name gtcr-notifications`
+1. Create a `.env` file with the name of the network you wish to use. Example `.env.xdai`.
+2. Look into `package.json` for the appropriate script (e.g. start:xdai). Create one if it does not yet exist.
+3. Use PM2 like so: `pm2 start yarn --interpreter bash --name gn-<network> -- start:<network>`, replacing `network` with the network name.
+
+Example for xDai:
+`pm2 start yarn --interpreter bash --name gn-xdai -- start:xdai`
 
 ## Other Scripts
 
