@@ -19,13 +19,19 @@ module.exports = ({ arbitratorInstance, db }) => async (
       process.env.PROVIDER_URL
     )
 
-    // Detect if event is related to a GTCR. No op if it isn't.
     const { address: arbitratorAddr } = arbitratorInstance
     const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
-    const itemID = await tcrInstance.arbitratorDisputeIDToItem(
-      arbitratorAddr,
-      _disputeID
-    )
+    let itemID
+    try {
+      itemID = await tcrInstance.arbitratorDisputeIDToItem(
+        arbitratorAddr,
+        _disputeID
+      )
+      // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      // Not a GTCR contract. No-op
+      return
+    }
 
     let arbitrators = {}
     try {
