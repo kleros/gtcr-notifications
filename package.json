@@ -19,7 +19,6 @@
     "start:mainnet": "env-cmd -f ./.env.mainnet node -r dotenv-safe/config index.js",
     "start:kovan": "env-cmd -f ./.env.kovan node -r dotenv-safe/config index.js",
     "start:xdai": "env-cmd -f ./.env.xdai node -r dotenv-safe/config index.js",
-    "clean": "rimraf ./db/* && nodetouch ./db/.gitkeep",
     "lint:eslint:fix": "eslint '**/*.js' --fix",
     "lint:prettier:fix": "prettier --write '**/*.js'",
     "lint:secretlint": "secretlint '**/*'",
@@ -27,7 +26,6 @@
     "release": "standard-version"
   },
   "dependencies": {
-    "@kleros/tcr": "^1.9.0-alpha.0",
     "@sendgrid/mail": "^6.5.0",
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
@@ -36,11 +34,12 @@
     "env-cmd": "^10.1.0",
     "eth-sig-util": "^2.5.2",
     "ethereumjs-util": "^7.0.2",
-    "ethers": "^4.0.40",
+    "ethers": "^4",
     "express": "^4.17.1",
     "json-schema": "^0.2.5",
     "level": "^6.0.0",
-    "morgan": "^1.9.1"
+    "morgan": "^1.9.1",
+    "node-fetch": "^2.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^8.2.0",

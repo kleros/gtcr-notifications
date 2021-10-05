@@ -36,20 +36,21 @@ module.exports = async (notification, db, subscriberAddr) => {
   if (emailSettings[subscriberAddr]) {
     const { email } = emailSettings[subscriberAddr]
     const { tcrAddr, itemID, subject, message } = notification
-    sgMail.send({
-      to: email,
-      from: {
-        email: process.env.FROM_ADDRESS,
-        name: process.env.FROM_NAME
-      },
-      templateId: process.env.TEMPLATE_ID,
-      dynamic_template_data: {
-        tcrAddr,
-        itemID,
-        subject,
-        message,
-        uiPath: process.env.UI_PATH
-      }
-    })
+    console.info('sending mail')
+    // sgMail.send({
+    //   to: email,
+    //   from: {
+    //     email: process.env.FROM_ADDRESS,
+    //     name: process.env.FROM_NAME
+    //   },
+    //   templateId: process.env.TEMPLATE_ID,
+    //   dynamic_template_data: {
+    //     tcrAddr,
+    //     itemID,
+    //     subject,
+    //     message,
+    //     uiPath: process.env.UI_PATH
+    //   }
+    // })
   }
 }

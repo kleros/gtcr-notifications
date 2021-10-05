@@ -1,7 +1,6 @@
 const ethers = require('ethers')
-const {
-  abi: _GTCR
-} = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
+const _GTCR = require('../abis/GeneralizedTCR.json')
+const _LightGTCR = require('../abis/LightGeneralizedTCR.json')
 
 const { ARBITRATORS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
@@ -14,24 +13,37 @@ module.exports = ({ arbitratorInstance, db }) => async (
   _disputeID,
   _arbitrable
 ) => {
+  console.info('appeal decision')
   try {
     const provider = new ethers.providers.JsonRpcProvider(
       process.env.PROVIDER_URL
     )
 
     const { address: arbitratorAddr } = arbitratorInstance
-    const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
+
+    // Check if event is related to Curate Classic
     let itemID
     try {
+      const tcrInstance = new ethers.Contract(_arbitrable, _GTCR, provider)
       itemID = await tcrInstance.arbitratorDisputeIDToItem(
         arbitratorAddr,
         _disputeID
       )
       // eslint-disable-next-line no-unused-vars
     } catch (err) {
-      // Not a GTCR contract. No-op
-      return
+      // Not a GTCR contract.
     }
+
+    // Check if event is related to Light Curate
+    if (!itemID) {
+      const tcrInstance = new ethers.Contract(_arbitrable, _LightGTCR, provider)
+      itemID = await tcrInstance.arbitratorDisputeIDToItemID(
+        arbitratorAddr,
+        _disputeID
+      )
+    }
+
+    if (!itemID) return // Unrelated event. No-op.
 
     let arbitrators = {}
     try {

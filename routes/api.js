@@ -3,33 +3,81 @@ const ethers = require('ethers')
 const cors = require('cors')
 const { bufferToHex } = require('ethereumjs-util')
 const { recoverPersonalSignature } = require('eth-sig-util')
-const {
-  abi: _GTCR
-} = require('@kleros/tcr/build/contracts/GeneralizedTCR.json')
-const {
-  abi: _IArbitrator
-} = require('@kleros/tcr/build/contracts/IArbitrator.json')
+
+const _GTCR = require('../abis/GeneralizedTCR.json')
+const _LightGTCR = require('../abis/LightGeneralizedTCR.json')
+const _IArbitrator = require('../abis/IArbitrator.json')
 
 const validateSchema = require('../schemas/validation')
-const { TCRS, ARBITRATORS, EMAIL_SETTINGS } = require('../utils/db-keys')
+const {
+  ARBITRATORS,
+  EMAIL_SETTINGS,
+  TCRS,
+  LGTCRS
+} = require('../utils/db-keys')
 
 const router = express.Router()
 const disputeCallback = require('../events/dispute')
 const evidenceCallback = require('../events/evidence')
 const resolvedCallback = require('../events/resolved')
+const lightResolvedCallback = require('../events/light-resolved')
 const appealableRulingCallback = require('../events/appeal-possible')
+const hasPaidAppealFeeCallback = require('../events/paid-fees')
 const appealCallback = require('../events/appeal-decision')
 
-const gtcrInterface = new ethers.utils.Interface(_GTCR)
-const arbitratorInterface = new ethers.utils.Interface(_IArbitrator)
-const tcrEventToCallback = {
-  Evidence: evidenceCallback,
-  Dispute: disputeCallback,
-  ItemStatusChange: resolvedCallback
-}
-const arbitratorEventToCallback = {
-  AppealPossible: appealableRulingCallback,
-  AppealDecision: appealCallback
+const subscribeToEvents = async (
+  tcrDBKey,
+  db,
+  tcrAddr,
+  subscriberAddr,
+  itemID,
+  provider,
+  tcrInstances,
+  tcrEventToCallback,
+  gtcrInterface,
+  gtcrView
+) => {
+  let tcrs = {}
+  try {
+    tcrs = await db.get(tcrDBKey)
+    tcrs = JSON.parse(tcrs)
+  } catch (err) {
+    if (err.type !== 'NotFoundError') throw new Error(err)
+  }
+  if (!tcrs[tcrAddr]) tcrs[tcrAddr] = {}
+  if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
+
+  tcrs[tcrAddr][subscriberAddr][itemID] = true
+  await db.put(tcrDBKey, JSON.stringify(tcrs))
+
+  // Instantiate tcr and add listeners if needed.
+  const fromBlock = await provider.getBlock()
+  if (!tcrInstances[tcrAddr])
+    tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
+
+  Object.keys(tcrEventToCallback).map(eventName => {
+    if (
+      provider.listeners({
+        topics: [gtcrInterface.events[eventName].topic],
+        address: tcrAddr
+      }).length === 0
+    )
+      tcrInstances[tcrAddr].on(
+        { ...tcrInstances[tcrAddr].filters[eventName](), fromBlock },
+        tcrEventToCallback[eventName]({
+          tcrInstance: tcrInstances[tcrAddr],
+          gtcrView,
+          db
+        })
+      )
+  })
+
+  // Also watch for events from the arbitrator set to that request.
+  const item = await gtcrView.getItem(tcrAddr, itemID)
+  let { arbitrator: arbitratorAddr } = item
+  arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
+
+  return [arbitratorAddr, fromBlock]
 }
 
 const buildRouter = (
@@ -37,7 +85,9 @@ const buildRouter = (
   gtcrView,
   provider,
   tcrInstances,
-  arbitratorInstances
+  arbitratorInstances,
+  lightTcrInstances,
+  lightGtcrView
 ) => {
   // Subscribe for in-app notifications.
   router.all('*', cors())
@@ -47,52 +97,89 @@ const buildRouter = (
     validateSchema('subscription'),
     async (req, res) => {
       try {
+        const gtcrInterface = new ethers.utils.Interface(_GTCR)
+        const arbitratorInterface = new ethers.utils.Interface(_IArbitrator)
+        const lightGtcrInterface = new ethers.utils.Interface(_LightGTCR)
+
+        const tcrEventToCallback = {
+          Evidence: evidenceCallback,
+          Dispute: disputeCallback,
+          ItemStatusChange: resolvedCallback,
+          HasPaidAppealFee: hasPaidAppealFeeCallback
+        }
+        const arbitratorEventToCallback = {
+          AppealPossible: appealableRulingCallback,
+          AppealDecision: appealCallback
+        }
+        const lightTcrEventToCallback = {
+          Evidence: evidenceCallback,
+          Dispute: disputeCallback,
+          ItemStatusChange: lightResolvedCallback
+        }
+
         let { subscriberAddr, tcrAddr, itemID } = req.body
 
         // Convert to checksummed address
         subscriberAddr = ethers.utils.getAddress(subscriberAddr)
         tcrAddr = ethers.utils.getAddress(tcrAddr)
 
-        // Initialize TCR watch list for the item it hasn't been already.
-        let tcrs = {}
+        let isCurateClassic
         try {
-          tcrs = await db.get(TCRS)
-          tcrs = JSON.parse(tcrs)
+          const itemInfo = await new ethers.Contract(
+            tcrAddr,
+            _GTCR,
+            provider
+          ).getItemInfo(itemID)
+          if (itemInfo.data) isCurateClassic = true
+          // eslint-disable-next-line no-unused-vars
         } catch (err) {
-          if (err.type !== 'NotFoundError') throw new Error(err)
+          // Not a curate classic instance.
         }
-        if (!tcrs[tcrAddr]) tcrs[tcrAddr] = {}
-        if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
 
-        tcrs[tcrAddr][subscriberAddr][itemID] = true
-        await db.put(TCRS, JSON.stringify(tcrs))
-
-        // Instantiate tcr and add listeners if needed.
-        const fromBlock = await provider.getBlock()
-        if (!tcrInstances[tcrAddr])
-          tcrInstances[tcrAddr] = new ethers.Contract(tcrAddr, _GTCR, provider)
-
-        Object.keys(tcrEventToCallback).map(eventName => {
-          if (
-            provider.listeners({
-              topics: [gtcrInterface.events[eventName].topic],
-              address: tcrAddr
-            }).length === 0
+        try {
+          // Light curate instance.
+          await new ethers.Contract(tcrAddr, _LightGTCR, provider).getItemInfo(
+            itemID
           )
-            tcrInstances[tcrAddr].on(
-              { ...tcrInstances[tcrAddr].filters[eventName](), fromBlock },
-              tcrEventToCallback[eventName]({
-                tcrInstance: tcrInstances[tcrAddr],
-                gtcrView,
-                db
-              })
-            )
-        })
+        } catch (err) {
+          // Not a light curate instance either. Bail.
+          res.send({
+            message: 'No Curate TCR found at the address.',
+            error: err.message,
+            status: 'failed'
+          })
+          return
+        }
 
-        // Also watch for events from the arbitrator set to that request.
-        const item = await gtcrView.getItem(tcrAddr, itemID)
-        let { arbitrator: arbitratorAddr } = item
-        arbitratorAddr = ethers.utils.getAddress(arbitratorAddr) // Convert to checksummed address.
+        let arbitratorAddr
+        let fromBlock
+        if (isCurateClassic) {
+          ;[arbitratorAddr, fromBlock] = await subscribeToEvents(
+            TCRS,
+            db,
+            tcrAddr,
+            subscriberAddr,
+            itemID,
+            provider,
+            tcrInstances,
+            tcrEventToCallback,
+            gtcrInterface,
+            gtcrView
+          )
+        } else {
+          ;[arbitratorAddr, fromBlock] = await subscribeToEvents(
+            LGTCRS,
+            db,
+            tcrAddr,
+            subscriberAddr,
+            itemID,
+            provider,
+            lightTcrInstances,
+            lightTcrEventToCallback,
+            lightGtcrInterface,
+            lightGtcrView
+          )
+        }
 
         let arbitrators = {}
         try {
