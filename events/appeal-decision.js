@@ -9,15 +9,11 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ arbitratorInstance, db }) => async (
+module.exports = ({ arbitratorInstance, db, provider, chainId }) => async (
   _disputeID,
   _arbitrable
 ) => {
   try {
-    const provider = new ethers.providers.JsonRpcProvider(
-      process.env.PROVIDER_URL
-    )
-
     const { address: arbitratorAddr } = arbitratorInstance
 
     // Check if event is related to Curate Classic
@@ -63,7 +59,8 @@ module.exports = ({ arbitratorInstance, db }) => async (
             itemID,
             tcrAddr: ethers.utils.getAddress(_arbitrable),
             subject: SUBJECTS[APPEALED],
-            message: MESSAGES[APPEALED]
+            message: MESSAGES[APPEALED],
+            chainId
           },
           db,
           subscriberAddr

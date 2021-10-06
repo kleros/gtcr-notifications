@@ -86,7 +86,8 @@ module.exports = async function buildApp() {
           tcrInstance: tcrInstances[tcrAddr],
           gtcrView,
           db,
-          provider
+          provider,
+          chainId
         })
       )
     )
@@ -120,7 +121,8 @@ module.exports = async function buildApp() {
           tcrInstance: lightTcrInstances[tcrAddr],
           gtcrView: lightGtcrView,
           db,
-          provider
+          provider,
+          chainId
         })
       )
     )
@@ -152,7 +154,8 @@ module.exports = async function buildApp() {
         arbitratorEventToCallback[eventName]({
           arbitratorInstance: arbitratorInstances[arbitratorAddr],
           db,
-          provider
+          provider,
+          chainId
         })
       )
     )
@@ -173,7 +176,8 @@ module.exports = async function buildApp() {
       tcrInstances,
       arbitratorInstances,
       lightTcrInstances,
-      lightGtcrView
+      lightGtcrView,
+      chainId
     )
   )
 

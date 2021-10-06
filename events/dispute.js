@@ -13,11 +13,10 @@ const _LightGTCR = require('../abis/LightGeneralizedTCR.json')
 const _GTCRView = require('../abis/GeneralizedTCRView.json')
 const _LightGTCRView = require('../abis/LightGeneralizedTCRView.json')
 
-module.exports = ({ tcrInstance, db }) => async (arbitrator, disputeID) => {
-  const provider = new ethers.providers.JsonRpcProvider(
-    process.env.PROVIDER_URL
-  )
-
+module.exports = ({ tcrInstance, db, provider, chainId }) => async (
+  arbitrator,
+  disputeID
+) => {
   // Check if event is related to Curate Classic
   let itemID
   let gtcrView
@@ -101,7 +100,8 @@ module.exports = ({ tcrInstance, db }) => async (arbitrator, disputeID) => {
             itemID,
             tcrAddr,
             subject: SUBJECTS[type],
-            message: MESSAGES[type]
+            message: MESSAGES[type],
+            chainId
           },
           db,
           subscriberAddr

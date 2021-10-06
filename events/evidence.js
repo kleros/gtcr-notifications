@@ -9,7 +9,10 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, db }) => async (_, evidenceGroupID) => {
+module.exports = ({ tcrInstance, db, chainId }) => async (
+  _,
+  evidenceGroupID
+) => {
   // Wait a bit to ensure subgraph is synced.
   await delay(20 * 1000)
 
@@ -78,7 +81,8 @@ module.exports = ({ tcrInstance, db }) => async (_, evidenceGroupID) => {
             itemID,
             tcrAddr,
             subject: SUBJECTS[EVIDENCE_SUBMITTED],
-            message: MESSAGES[EVIDENCE_SUBMITTED]
+            message: MESSAGES[EVIDENCE_SUBMITTED],
+            chainId
           },
           db,
           subscriberAddr

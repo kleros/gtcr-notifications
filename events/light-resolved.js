@@ -14,7 +14,8 @@ const _LightGTCRView = require('../abis/LightGeneralizedTCRView.json')
 
 module.exports = ({
   tcrInstance: { address: tcrAddr },
-  db
+  db,
+  chainId
 }) => async itemID => {
   // Wait a bit to ensure subgraph is synced.
   await delay(20 * 1000)
@@ -72,7 +73,8 @@ module.exports = ({
             itemID: itemID,
             tcrAddr,
             subject: SUBJECTS[type],
-            message: MESSAGES[type]
+            message: MESSAGES[type],
+            chainId
           },
           db,
           subscriberAddr

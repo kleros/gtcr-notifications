@@ -35,7 +35,8 @@ const subscribeToEvents = async (
   tcrInstances,
   tcrEventToCallback,
   gtcrInterface,
-  gtcrView
+  gtcrView,
+  chainId
 ) => {
   let tcrs = {}
   try {
@@ -67,7 +68,9 @@ const subscribeToEvents = async (
         tcrEventToCallback[eventName]({
           tcrInstance: tcrInstances[tcrAddr],
           gtcrView,
-          db
+          db,
+          provider,
+          chainId
         })
       )
   })
@@ -87,7 +90,8 @@ const buildRouter = (
   tcrInstances,
   arbitratorInstances,
   lightTcrInstances,
-  lightGtcrView
+  lightGtcrView,
+  chainId
 ) => {
   // Subscribe for in-app notifications.
   router.all('*', cors())
@@ -164,7 +168,8 @@ const buildRouter = (
             tcrInstances,
             tcrEventToCallback,
             gtcrInterface,
-            gtcrView
+            gtcrView,
+            chainId
           )
         } else {
           ;[arbitratorAddr, fromBlock] = await subscribeToEvents(
@@ -177,7 +182,8 @@ const buildRouter = (
             lightTcrInstances,
             lightTcrEventToCallback,
             lightGtcrInterface,
-            lightGtcrView
+            lightGtcrView,
+            chainId
           )
         }
 
