@@ -1,5 +1,6 @@
 const fetch = require('node-fetch')
 const ethers = require('ethers')
+const delay = require('delay')
 
 const { LGTCRS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
@@ -15,7 +16,8 @@ module.exports = ({
   tcrInstance: { address: tcrAddr },
   db
 }) => async itemID => {
-  console.info('resolved')
+  // Wait a bit to ensure subgraph is synced.
+  await delay(20 * 1000)
   try {
     const subgraphQuery = {
       query: `

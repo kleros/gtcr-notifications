@@ -1,5 +1,6 @@
 const ethers = require('ethers')
 const fetch = require('node-fetch')
+const delay = require('delay')
 
 const { TCRS, LGTCRS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
@@ -9,7 +10,8 @@ const {
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
 module.exports = ({ tcrInstance, db }) => async (_, evidenceGroupID) => {
-  console.info('evidence')
+  // Wait a bit to ensure subgraph is synced.
+  await delay(20 * 1000)
 
   let itemID
   const subgraphQuery = {
@@ -41,7 +43,6 @@ module.exports = ({ tcrInstance, db }) => async (_, evidenceGroupID) => {
 
   if (!itemID) {
     // i.e. it is a curate classic instance.
-
     dbKey = TCRS
     const { _itemID } = (
       await provider.getLogs({
@@ -61,7 +62,6 @@ module.exports = ({ tcrInstance, db }) => async (_, evidenceGroupID) => {
     const { address: tcrAddr } = tcrInstance
 
     let latestTcrObj = {}
-    console.info(dbKey)
     try {
       latestTcrObj = await db.get(dbKey)
       latestTcrObj = JSON.parse(latestTcrObj)

@@ -13,7 +13,6 @@ module.exports = ({ arbitratorInstance, db }) => async (
   _disputeID,
   _arbitrable
 ) => {
-  console.info('appeal decision')
   try {
     const provider = new ethers.providers.JsonRpcProvider(
       process.env.PROVIDER_URL

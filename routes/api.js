@@ -48,7 +48,6 @@ const subscribeToEvents = async (
   if (!tcrs[tcrAddr][subscriberAddr]) tcrs[tcrAddr][subscriberAddr] = {}
 
   tcrs[tcrAddr][subscriberAddr][itemID] = true
-  await db.put(tcrDBKey, JSON.stringify(tcrs))
 
   // Instantiate tcr and add listeners if needed.
   const fromBlock = await provider.getBlock()

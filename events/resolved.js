@@ -14,7 +14,6 @@ module.exports = ({ tcrInstance, gtcrView, db }) => async (
   _resolved
 ) => {
   try {
-    console.info('resolved')
     // Ignore status change events of unresolved requests.
     if (!_resolved) return
 

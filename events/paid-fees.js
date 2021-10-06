@@ -13,7 +13,6 @@ module.exports = ({ tcrInstance, db }) => async (
   side
 ) => {
   try {
-    console.info('paid-fees')
     const { address: tcrAddr } = tcrInstance
 
     let latestTcrObj = {}

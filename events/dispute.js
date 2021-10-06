@@ -14,7 +14,6 @@ const _GTCRView = require('../abis/GeneralizedTCRView.json')
 const _LightGTCRView = require('../abis/LightGeneralizedTCRView.json')
 
 module.exports = ({ tcrInstance, db }) => async (arbitrator, disputeID) => {
-  console.info('dispute')
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.PROVIDER_URL
   )
