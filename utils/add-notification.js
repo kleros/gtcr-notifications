@@ -21,7 +21,6 @@ module.exports = async (notification, db, subscriberAddr) => {
   }
 
   subscriberNotifications.notifications.push(notification)
-  console.info(notification.message)
 
   await db.put(subscriberAddr, JSON.stringify(subscriberNotifications))
 
@@ -35,7 +34,7 @@ module.exports = async (notification, db, subscriberAddr) => {
 
   if (emailSettings[subscriberAddr]) {
     const { email } = emailSettings[subscriberAddr]
-    const { tcrAddr, itemID, subject, message } = notification
+    const { tcrAddr, itemID, subject, message, chainId } = notification
     sgMail.send({
       to: email,
       from: {
@@ -48,7 +47,8 @@ module.exports = async (notification, db, subscriberAddr) => {
         itemID,
         subject,
         message,
-        uiPath: process.env.UI_PATH
+        uiPath: process.env.UI_PATH,
+        chainId
       }
     })
   }

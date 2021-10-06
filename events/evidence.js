@@ -1,21 +1,53 @@
 const ethers = require('ethers')
-const { TCRS } = require('../utils/db-keys')
+const fetch = require('node-fetch')
+const delay = require('delay')
+
+const { TCRS, LGTCRS } = require('../utils/db-keys')
 const addNotification = require('../utils/add-notification')
 const {
   NOTIFICATION_TYPES: { EVIDENCE_SUBMITTED }
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, db }) => async (
+module.exports = ({ tcrInstance, db, chainId }) => async (
   _,
-  evidenceGroupID,
-  submitter
+  evidenceGroupID
 ) => {
+  // Wait a bit to ensure subgraph is synced.
+  await delay(20 * 1000)
+
+  let itemID
+  const subgraphQuery = {
+    query: `
+      {
+        lrequests (where: { evidenceGroupID: "${evidenceGroupID}"}) {
+          item {
+            itemID
+          }
+        }
+      }
+    `
+  }
+  const response = await fetch(process.env.GTCR_SUBGRAPH_URL, {
+    method: 'POST',
+    body: JSON.stringify(subgraphQuery)
+  })
+  const parsedValues = await response.json()
+
+  let dbKey
+  if (parsedValues.data.lrequests.length > 0) {
+    dbKey = LGTCRS
+    itemID = parsedValues.data.lrequests[0].item.itemID
+  }
+
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.PROVIDER_URL
   )
-  try {
-    const { _itemID: itemID } = (
+
+  if (!itemID) {
+    // i.e. it is a curate classic instance.
+    dbKey = TCRS
+    const { _itemID } = (
       await provider.getLogs({
         ...tcrInstance.filters.RequestEvidenceGroupID(
           null,
@@ -26,12 +58,15 @@ module.exports = ({ tcrInstance, db }) => async (
       })
     ).map(log => tcrInstance.interface.parseLog(log))[0].values
 
+    itemID = _itemID
+  }
+
+  try {
     const { address: tcrAddr } = tcrInstance
-    submitter = ethers.utils.getAddress(submitter)
 
     let latestTcrObj = {}
     try {
-      latestTcrObj = await db.get(TCRS)
+      latestTcrObj = await db.get(dbKey)
       latestTcrObj = JSON.parse(latestTcrObj)
     } catch (err) {
       if (err.type !== 'NotFoundError') throw new Error(err)
@@ -39,7 +74,6 @@ module.exports = ({ tcrInstance, db }) => async (
 
     Object.keys(latestTcrObj[tcrAddr])
       .filter(subscriberAddr => latestTcrObj[tcrAddr][subscriberAddr][itemID])
-      .filter(subscriberAddr => subscriberAddr !== submitter)
       .forEach(async subscriberAddr =>
         addNotification(
           {
@@ -47,7 +81,8 @@ module.exports = ({ tcrInstance, db }) => async (
             itemID,
             tcrAddr,
             subject: SUBJECTS[EVIDENCE_SUBMITTED],
-            message: MESSAGES[EVIDENCE_SUBMITTED]
+            message: MESSAGES[EVIDENCE_SUBMITTED],
+            chainId
           },
           db,
           subscriberAddr

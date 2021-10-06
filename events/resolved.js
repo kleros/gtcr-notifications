@@ -6,7 +6,7 @@ const {
 } = require('../utils/types')
 const { SUBJECTS, MESSAGES } = require('../utils/messages')
 
-module.exports = ({ tcrInstance, gtcrView, db }) => async (
+module.exports = ({ tcrInstance, gtcrView, db, chainId }) => async (
   itemID,
   _requestIndex,
   _roundIndex,
@@ -41,7 +41,8 @@ module.exports = ({ tcrInstance, gtcrView, db }) => async (
             itemID: itemID,
             tcrAddr,
             subject: SUBJECTS[type],
-            message: MESSAGES[type]
+            message: MESSAGES[type],
+            chainId
           },
           db,
           subscriberAddr

@@ -6,7 +6,7 @@ const {
 const { SUBJECTS } = require('../utils/messages')
 const { PARTY } = require('../utils/types')
 
-module.exports = ({ tcrInstance, db }) => async (
+module.exports = ({ tcrInstance, db, chainId }) => async (
   itemID,
   _request,
   _round,
@@ -36,7 +36,8 @@ module.exports = ({ tcrInstance, db }) => async (
               side === PARTY.REQUESTER ? 'submitter' : 'challenger'
             } is fully funded. The ${
               side === PARTY.REQUESTER ? 'challenger' : 'submitter'
-            } must fully fund before the deadline in order to not lose the case.`
+            } must fully fund before the deadline in order to not lose the case.`,
+            chainId
           },
           db,
           subscriberAddr
