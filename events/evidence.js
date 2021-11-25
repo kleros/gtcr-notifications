@@ -47,7 +47,7 @@ module.exports = ({ tcrInstance, db, chainId }) => async (
   if (!itemID) {
     // i.e. it is a curate classic instance.
     dbKey = TCRS
-    const { _itemID } = (
+    const log = (
       await provider.getLogs({
         ...tcrInstance.filters.RequestEvidenceGroupID(
           null,
@@ -56,9 +56,17 @@ module.exports = ({ tcrInstance, db, chainId }) => async (
         ),
         fromBlock: 0
       })
-    ).map(log => tcrInstance.interface.parseLog(log))[0].values
+    ).map(log => tcrInstance.interface.parseLog(log))[0]
 
+    const { _itemID } = log || {}
     itemID = _itemID
+
+    if (!itemID)
+      throw new Error(
+        `Could not find itemID for evidenceGroupID ${String(
+          evidenceGroupID
+        )}, tcr ${tcrInstance.address}`
+      )
   }
 
   try {
