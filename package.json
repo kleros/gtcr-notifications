@@ -37,7 +37,7 @@
     "ethereumjs-util": "^7.0.2",
     "ethers": "^4",
     "express": "^4.17.1",
-    "json-schema": "^0.2.5",
+    "json-schema": "^0.4.0",
     "level": "^6.0.0",
     "morgan": "^1.9.1",
     "node-fetch": "^2.0.0"
