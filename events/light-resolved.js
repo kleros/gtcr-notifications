@@ -35,8 +35,8 @@ module.exports = ({
     const response = await fetch(process.env.GTCR_SUBGRAPH_URL, {
       method: 'POST',
       body: JSON.stringify(subgraphQuery),
-      headers:{
-        'Content-Type':'application/json'
+      headers: {
+        'Content-Type': 'application/json'
       }
     })
     const parsedValues = await response.json()

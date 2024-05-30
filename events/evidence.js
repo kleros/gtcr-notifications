@@ -32,7 +32,7 @@ module.exports = ({ tcrInstance, db, chainId }) => async (
     method: 'POST',
     body: JSON.stringify(subgraphQuery),
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     }
   })
   const parsedValues = await response.json()
