@@ -23,8 +23,8 @@ module.exports = ({
     const subgraphQuery = {
       query: `
         {
-          litems (where: { itemID: "${itemID}"}) {
-            requests (first: 1, orderBy: submissionTime, orderDirection: desc) {
+          litems:LItem (where: { itemID:{_eq: "${itemID}"}}) {
+            requests (limit: 1, order_by: {submissionTime: desc}) {
               resolved
               disputed
             }

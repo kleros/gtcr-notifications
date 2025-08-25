@@ -20,7 +20,7 @@ module.exports = ({ tcrInstance, db, chainId }) => async (
   const subgraphQuery = {
     query: `
       {
-        lrequests (where: { evidenceGroupID: "${evidenceGroupID}"}) {
+       lrequests:LRequest (where: { evidenceGroup_id: {_eq: "${evidenceGroupID}"}}) {
           item {
             itemID
           }
